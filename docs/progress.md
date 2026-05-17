@@ -1,37 +1,50 @@
 # Edenemisraport
 
-> **Juhend:** See fail on projektitöö teise nädala väljund. Uuenda lühidalt iga esitamise eel. Kustuta see juhendrida.
-
 ## Mis on valmis
 
-- [ ] Docker Compose käivitab kõik teenused
-- [ ] Andmeid saadakse allikast kätte
-- [ ] Andmed laetakse `staging` kihti
-- [ ] Vähemalt üks transformatsioon toimib
-- [ ] Vähemalt üks näidikulaud on nähtaval
-- [ ] Vähemalt üks andmekvaliteedi test läbib
+- [x] Docker Compose käivitab kõik teenused
+- [x] Andmeid saadakse Riigikogu API-st kätte
+- [x] Andmed laetakse `raw` kihti
+- [x] Vähemalt üks transformatsioon toimib (stg_riigikogu)
+- [x] Vähemalt üks näidikulaud on nähtaval (Metabase)
+- [x] Vähemalt üks andmekvaliteedi test läbib (not_null, unique)
+- [ ] Rahvaalgatus.ee API sissevõtt valmis
+- [ ] Vikipeedia API sissevõtt valmis
+- [ ] Kõik andmekvaliteedi testid rohelised
 
-[Täpsusta lühidalt, mis täpselt valmis on]
+Riigikogu andmevoog töötab otsast lõpuni: API → raw → staging →
+Metabase. Evelin on Rahvaalgatus.ee API sissevõtuga töös, Liis
+Vikipeedia omaga. seeds/allikad.csv on valmis.
 
 ## Järgmised sammud
 
-- [Esimene tegevus, mis ees ootab]
-- [Teine tegevus]
-- [Kolmas tegevus]
+- Rahvaalgatus.ee ja Vikipeedia sissevõtt lõpetada ja staging
+  mudelid lisada
+- mart_allikate_maht ja mart_kvaliteet mudelid valmis teha
+  (agregeeritud andmed dashboardi jaoks)
+- Ülejäänud andmekvaliteedi testid lisada (keeletuvastus, värskus)
+- Metabase dashboard täiendada kõigi 3 mõõdikuga
+- Evelin teeb oma README ja testide osad valmis enne 1. juunit
+  (puhkus 1.–7. juunil)
 
 ## Mis takistab
 
-- [Probleem 1 — näiteks: API tagastab vigaseid väärtusi ühes linnas]
-- [Probleem 2 — või: "Praegu pole blokeerivaid probleeme"]
+- Riigikogu API tagastab istungipäevadel rohkem andmeid kui muudel
+  päevadel — värskuse test (< 48h) vajab kohandamist, et mitte
+  valepositiivseid anda nädalavahetustel
+- Vikipeedia API `continue`-parameeter vajab veel testimist,
+  et leheküljed õigesti järjest kätte saada
 
 ## Kontrollpunkt
 
 Käsk, millega saab kontrollida, et töövoog töötab:
 
 ```bash
-# [Lisa siia käsk, mis näitab, et andmed liiguvad allikast näidikulauani]
-# Näiteks:
 docker compose exec pipeline python scripts/run_pipeline.py check
 ```
 
-Oodatav tulemus: [Kirjelda, mida töötav süsteem väljastab]
+Oodatav tulemus: kõik kolm allikat väljastab viimase eduka
+sissevõtu kellaaja ja kirjete arvu, nt:
+  riigikogu      last_run=2026-05-30 06:00  rows=142
+  rahvaalgatus   last_run=2026-05-30 06:00  rows=38
+  wikipedia      last_run=2026-05-30 06:00  rows=215
