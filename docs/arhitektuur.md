@@ -22,45 +22,45 @@ kvaliteetseid ja kasutatavaid tekstiandmeid regulaarseks andmekogumiseks?
 ```mermaid
 flowchart TD
     subgraph Allikad
-        A1[Riigikogu API\napi.riigikogu.ee]
-        A2[Rahvaalgatus.ee API\nrahvaalgatus.ee/api]
-        A3[Vikipeedia API\net.wikipedia.org/w/api.php]
-        A4[Seed: allikate nimekiri\nstaatiline CSV]
+        A1["Riigikogu API"]
+        A2["Rahvaalgatus.ee API"]
+        A3["Vikipeedia API"]
+        A4["Seed: allikad.csv"]
     end
 
-    subgraph Sissevõtt ["Sissevõtt (Airflow + Python)"]
-        B1[DAG: riigikogu_ingest\nigapäev istungipäevadel]
-        B2[DAG: rahvaalgatus_ingest\nigapäev]
-        B3[DAG: wikipedia_ingest\nigapäev]
+    subgraph Sissevõtt ["Sissevõtt - Airflow + Python"]
+        B1["riigikogu_ingest"]
+        B2["rahvaalgatus_ingest"]
+        B3["wikipedia_ingest"]
     end
 
-    subgraph Ladu ["Andmeladu (PostgreSQL)"]
-        C1[(raw)\ntoorandmed]
-        C2[(staging)\npuhastatud]
-        C3[(mart)\naggregeeritud]
+    subgraph Ladu ["Andmeladu - PostgreSQL"]
+        C1[("raw")]
+        C2[("staging")]
+        C3[("mart")]
     end
 
-    subgraph Transformatsioon ["Transformatsioon (dbt)"]
-        D1[stg_riigikogu]
-        D2[stg_rahvaalgatus]
-        D3[stg_wikipedia]
-        D4[mart_allikate_maht]
-        D5[mart_kvaliteet]
+    subgraph Transformatsioon ["Transformatsioon - dbt"]
+        D1["stg_riigikogu"]
+        D2["stg_rahvaalgatus"]
+        D3["stg_wikipedia"]
+        D4["mart_allikate_maht"]
+        D5["mart_kvaliteet"]
     end
 
-    subgraph Kvaliteet ["Kvaliteeditestid (dbt tests)"]
-        E1[not_null]
-        E2[unique: dokumendi ID]
-        E3[min pikkus: 100 tähemärki]
-        E4[accepted language: et]
-        E5[värskuse test: viimane kirje < 48h]
+    subgraph Kvaliteet ["Kvaliteeditestid - dbt tests"]
+        E1["not_null"]
+        E2["unique: dokumendi ID"]
+        E3["min pikkus 100 tahemärki"]
+        E4["keel: eesti"]
+        E5["värskus: viimane kirje < 48h"]
     end
 
     subgraph Visualiseerimine
-        F1[Metabase Dashboard]
+        F1["Metabase Dashboard"]
     end
 
-    Scheduler[Airflow Scheduler] --> B1 & B2 & B3
+    Scheduler["Airflow Scheduler"] --> B1 & B2 & B3
 
     A1 --> B1 --> C1
     A2 --> B2 --> C1
