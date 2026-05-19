@@ -63,9 +63,9 @@ Iga töövoo käivitus saab unikaalse `run_id`. Staging toorandmed kasvavad kumu
 
 | Liige | Roll | Vastutus |
 |---|---|---|
-| Mina (edasijõudnud) | Arhitekt + pipeline | Prefect pipeline, Docker seadistus, dbt transformatsioonid |
-| Kolleeg E (algaja) | Andmeallikate omanik | Riigikogu ja Wikipedia ingest-skriptid |
-| Kolleeg L (algaja) | Kvaliteet + visualisatsioon | dbt testid, Streamlit näidikulaud |
+| Eleri | Andmeallika ja transformatsioonide omanik | Kirjutab sissevõtu loogika Riigikogu API najal, transformatsioonid ja mõõdikute arvutuse |
+| Evelin | Kvaliteedi omanik | Rahvaalgatuse API kontroll, kirjutab dbt kvaliteeditestid, valmistab ette mõõdikute arvutuse loogika  |
+| Liis | Näidikulaua omanik | Vikipeedia API kontroll, valmistab ette staatilise andmetabeli, valmistab ette näidikulaua vaated |
 
 ## Riskid
 
