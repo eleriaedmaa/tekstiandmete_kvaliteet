@@ -23,9 +23,9 @@ kvaliteetseid ja kasutatavaid tekstiandmeid regulaarseks andmekogumiseks?
 flowchart LR
     SCH["Airflow scheduler"]
 
-    SCH -->|@daily| B1["riigikogu_ingest.py"]
-    SCH -->|@daily| B2["rahvaalgatus_ingest.py"]
-    SCH -->|@daily| B3["wikipedia_ingest.py"]
+    SCH -->|daily| B1["riigikogu_ingest.py"]
+    SCH -->|daily| B2["rahvaalgatus_ingest.py"]
+    SCH -->|daily| B3["wikipedia_ingest.py"]
     SCH -->|BashOperator| TEST["dbt run + dbt test"]
 
     B1 -->|Airflow PythonOperator| R1[("raw.riigikogu_raw")]
