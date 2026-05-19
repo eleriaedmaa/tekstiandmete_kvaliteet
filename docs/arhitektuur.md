@@ -23,54 +23,36 @@ kvaliteetseid ja kasutatavaid tekstiandmeid regulaarseks andmekogumiseks?
 flowchart TD
     subgraph Allikad
         A1["Riigikogu API"]
-        A2["Rahvaalgatus.ee API"]
+        A2["Rahvaalgatus API"]
         A3["Vikipeedia API"]
-        A4["Seed: allikad.csv"]
     end
 
-    subgraph Sissevõtt ["Sissevõtt - Airflow + Python"]
+    SCH["Airflow scheduler"]
+
+    subgraph Sissevõtt ["Sissevõtt — Python"]
         B1["riigikogu_ingest"]
         B2["rahvaalgatus_ingest"]
         B3["wikipedia_ingest"]
     end
 
-    subgraph Ladu ["Andmeladu - PostgreSQL"]
-        C1[("raw")]
-        C2[("staging")]
-        C3[("mart")]
-    end
+    SEED["allikad.csv (dbt seed)"]
 
-    subgraph Transformatsioon ["Transformatsioon - dbt"]
-        D1["stg_riigikogu"]
-        D2["stg_rahvaalgatus"]
-        D3["stg_wikipedia"]
-        D4["mart_allikate_maht"]
-        D5["mart_kvaliteet"]
-    end
+    RAW[("raw — toorandmed muutmata")]
+    STG[("staging — puhastatud, normaliseeritud")]
+    MART[("mart — agregeeritud mõõdikud")]
+    TEST["Kvaliteeditestid
+not_null · unique · keel · pikkus · värskus"]
+    DASH["Metabase dashboard
+3 mõõdikut äriküsimusele"]
 
-    subgraph Kvaliteet ["Kvaliteeditestid - dbt tests"]
-        E1["not_null"]
-        E2["unique: dokumendi ID"]
-        E3["min pikkus 100 tahemärki"]
-        E4["keel: eesti"]
-        E5["värskus: viimane kirje < 48h"]
-    end
-
-    subgraph Visualiseerimine
-        F1["Metabase Dashboard"]
-    end
-
-    Scheduler["Airflow Scheduler"] --> B1 & B2 & B3
-
-    A1 --> B1 --> C1
-    A2 --> B2 --> C1
-    A3 --> B3 --> C1
-    A4 -->|dbt seed| C2
-
-    C1 --> D1 & D2 & D3 --> C2
-    C2 --> D4 & D5 --> C3
-    C2 --> E1 & E2 & E3 & E4 & E5
-    C3 --> F1
+    A1 & A2 & A3 --> SCH
+    SCH --> B1 & B2 & B3
+    B1 & B2 & B3 --> RAW
+    SEED --> STG
+    RAW --> STG
+    STG --> TEST
+    STG --> MART
+    MART --> DASH
 ```
 
 ---
