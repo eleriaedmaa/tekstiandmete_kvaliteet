@@ -39,9 +39,9 @@ Iga töövoo käivitus saab unikaalse `run_id`. Staging toorandmed kasvavad kumu
 
 | Liige | Roll | Vastutus |
 |---|---|---|
-| Eleri (edasijõudnud) | Andmeallika ja transformatsioonide omanik | Kirjutab sissevõtu loogika Riigikogu API najal, transformatsioonid ja mõõdikute arvutuse, Airflow DAG-id, Docker seadistus |
-| Evelin (algaja) | Kvaliteedi omanik | Rahvaalgatus.ee API kontroll, kirjutab dbt kvaliteeditestid, valmistab ette mõõdikute arvutuse loogika |
-| Liis (algaja) | Näidikulaua omanik | Wikipedia API kontroll, valmistab ette staatilise andmetabeli (seeds), valmistab ette näidikulaua vaated |
+| Eleri | Andmeallika ja transformatsioonide omanik | Kirjutab sissevõtu loogika Riigikogu API najal, transformatsioonid ja mõõdikute arvutuse, Airflow DAG-id, Docker seadistus |
+| Evelin | Kvaliteedi omanik | Rahvaalgatus.ee API kontroll, kirjutab dbt kvaliteeditestid, valmistab ette mõõdikute arvutuse loogika |
+| Liis | Näidikulaua omanik | Wikipedia API kontroll, valmistab ette staatilise andmetabeli (seeds), valmistab ette näidikulaua vaated |
 
 ## Riskid
 
