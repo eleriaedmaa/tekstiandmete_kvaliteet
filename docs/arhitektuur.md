@@ -29,30 +29,30 @@ flowchart TD
 
     SCH["Airflow scheduler"]
 
-    subgraph Sissevõtt ["Sissevõtt — Python"]
+    subgraph Sissevõtt ["Sissevõtt — Airflow PythonOperator"]
         B1["riigikogu_ingest"]
         B2["rahvaalgatus_ingest"]
         B3["wikipedia_ingest"]
     end
 
-    SEED["allikad.csv (dbt seed)"]
+    SEED["seeds/allikad.csv"]
+    TEST["Airflow BashOperator\ndbt run + dbt test"]
 
-    RAW[("raw — toorandmed muutmata")]
-    STG[("staging — puhastatud, normaliseeritud")]
-    MART[("mart — agregeeritud mõõdikud")]
-    TEST["Kvaliteeditestid
-not_null · unique · keel · pikkus · värskus"]
-    DASH["Metabase dashboard
-3 mõõdikut äriküsimusele"]
+    RAW[("raw.riigikogu_raw\nraw.rahvaalgatus_raw\nraw.wikipedia_raw")]
+    STG1["dbt staging"]
+    STG2[("staging.stg_riigikogu\nstaging.stg_rahvaalgatus\nstaging.stg_wikipedia")]
+    MART1["dbt marts"]
+    MART2[("mart.allikate_maht\nmart.kvaliteet")]
+    DASH["Metabase dashboard"]
 
     A1 & A2 & A3 --> SCH
     SCH --> B1 & B2 & B3
+    SEED -->|dbt seed| STG2
     B1 & B2 & B3 --> RAW
-    SEED --> STG
-    RAW --> STG
-    STG --> TEST
-    STG --> MART
-    MART --> DASH
+    RAW --> STG1 --> STG2
+    STG2 --> TEST
+    STG2 --> MART1 --> MART2
+    MART2 --> DASH
 ```
 
 ---
