@@ -6,9 +6,9 @@ Kui palju kvaliteetset eestikeelset teksti on võimalik regulaarselt koguda vali
 
 ## Mõõdikud
 
-1. **Kasutatava teksti kogumaht sõnades allika kohta ajas** — kui järjepidev on andmehulga kasv ja kui tihti tasub allikast andmeid pärida?
-2. **Kasutatavuse % allika kohta** — kui suur osa kogutud tekstiandmetest on kvaliteetsed?
-3. **Peamised kvaliteedipuudused allika kohta** — miks andmed ei kvalifitseeru edaspidiseks kasutamiseks?
+1. **Kasutatava teksti kogumaht sõnades allika kohta ajas** - kui järjepidev on andmehulga kasv ja kui tihti tasub allikast andmeid pärida?
+2. **Kasutatavuse % allika kohta** - kui suur osa kogutud tekstiandmetest on kvaliteetsed?
+3. **Peamised kvaliteedipuudused allika kohta** - miks andmed ei kvalifitseeru edaspidiseks kasutamiseks?
 
 > Dokument loetakse kasutatavaks, kui ta läbib andmekvaliteedi testid:
 > mitte-null väljad, piisav pikkus (≥100 tähemärki), korrektne keel (eesti),
