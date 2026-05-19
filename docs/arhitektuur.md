@@ -23,35 +23,7 @@ Kõik kolm allikat on avalikud ja ei nõua autentimist. Rahvaalgatus.ee puhul ta
 
 ## Andmevoog
 
-```mermaid
-flowchart LR
-    airflow[Airflow DAG\nigal ööl kell 06:00] --> ingest_rk[ingest_riigikogu.py]
-    airflow --> ingest_ra[ingest_rahvaalgatus.py]
-    airflow --> ingest_wp[ingest_wikipedia.py]
 
-    rk_api[Riigikogu API] --> ingest_rk
-    ra_api[Rahvaalgatus API] --> ingest_ra
-    ra_web[rahvaalgatus.ee lehed] --> ingest_ra
-    wp_api[Wikipedia API] --> ingest_wp
-
-    ingest_rk --> stg_rk[(staging.riigikogu_raw)]
-    ingest_ra --> stg_ra[(staging.rahvaalgatus_raw)]
-    ingest_wp --> stg_wp[(staging.wikipedia_raw)]
-
-    stg_rk --> dbt[dbt run]
-    stg_ra --> dbt
-    stg_wp --> dbt
-
-    dbt --> int[(intermediate.int_documents)]
-    int --> fct[(mart.fct_documents)]
-    fct --> mart_quality[(mart.mart_source_quality)]
-
-    airflow --> dbt
-    airflow --> tests[dbt test]
-    fct --> tests
-
-    mart_quality --> dashboard[Metabase dashboard]
-```
 
 ## Andmebaasi kihid
 
