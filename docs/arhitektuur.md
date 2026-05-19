@@ -20,39 +20,35 @@ kvaliteetseid ja kasutatavaid tekstiandmeid regulaarseks andmekogumiseks?
 ## Andmevoog
 
 ```mermaid
-flowchart TD
-    subgraph Allikad
-        A1["Riigikogu API"]
-        A2["Rahvaalgatus API"]
-        A3["Vikipeedia API"]
-    end
-
+flowchart LR
     SCH["Airflow scheduler"]
 
-    subgraph Sissevõtt ["Sissevõtt — Airflow PythonOperator"]
-        B1["riigikogu_ingest"]
-        B2["rahvaalgatus_ingest"]
-        B3["wikipedia_ingest"]
-    end
+    SCH -->|@daily| B1["riigikogu_ingest.py"]
+    SCH -->|@daily| B2["rahvaalgatus_ingest.py"]
+    SCH -->|@daily| B3["wikipedia_ingest.py"]
+    SCH -->|BashOperator| TEST["dbt run + dbt test"]
 
-    SEED["seeds/allikad.csv"]
-    TEST["Airflow BashOperator\ndbt run + dbt test"]
+    B1 -->|Airflow PythonOperator| R1[("raw.riigikogu_raw")]
+    B2 -->|Airflow PythonOperator| R2[("raw.rahvaalgatus_raw")]
+    B3 -->|Airflow PythonOperator| R3[("raw.wikipedia_raw")]
 
-    RAW[("raw.riigikogu_raw\nraw.rahvaalgatus_raw\nraw.wikipedia_raw")]
-    STG1["dbt staging"]
-    STG2[("staging.stg_riigikogu\nstaging.stg_rahvaalgatus\nstaging.stg_wikipedia")]
-    MART1["dbt marts"]
-    MART2[("mart.allikate_maht\nmart.kvaliteet")]
-    DASH["Metabase dashboard"]
+    SEED["seeds/allikad.csv"] -->|dbt seed| DSEED[("staging.allikad")]
 
-    A1 & A2 & A3 --> SCH
-    SCH --> B1 & B2 & B3
-    SEED -->|dbt seed| STG2
-    B1 & B2 & B3 --> RAW
-    RAW --> STG1 --> STG2
-    STG2 --> TEST
-    STG2 --> MART1 --> MART2
-    MART2 --> DASH
+    R1 -->|dbt staging| S1[("staging.stg_riigikogu")]
+    R2 -->|dbt staging| S2[("staging.stg_rahvaalgatus")]
+    R3 -->|dbt staging| S3[("staging.stg_wikipedia")]
+
+    S1 -->|dbt marts| M1[("mart.allikate_maht")]
+    S2 -->|dbt marts| M1
+    S3 -->|dbt marts| M1
+    S1 -->|dbt marts| M2[("mart.kvaliteet")]
+    S2 -->|dbt marts| M2
+    S3 -->|dbt marts| M2
+    DSEED --> M1
+    DSEED --> M2
+
+    M1 --> DASH["Metabase dashboard"]
+    M2 --> DASH
 ```
 
 ---
