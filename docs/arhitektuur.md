@@ -2,14 +2,13 @@
 
 ## Äriküsimus
 
-Millised avalikud eestikeelsed andmeallikad annavad suurima mahu
-kvaliteetseid ja kasutatavaid tekstiandmeid regulaarseks andmekogumiseks?
+Kui palju kvaliteetset eestikeelset teksti on võimalik regulaarselt koguda valitud avalikest andmeallikatest?
 
 ## Mõõdikud
 
-1. **Uute dokumentide arv allika kohta ajas** — kas allikas kasvab ootuspäraselt?
-2. **Kvaliteedikontrolli läbimise %** — kui suur osa kogutud dokumentidest on tegelikult kasutatavad?
-3. **Kasutatavate dokumentide koguarv allika kohta** — absoluutne maht analüüsi jaoks
+1. **Kasutatava teksti kogumaht sõnades allika kohta ajas** — kui järjepidev on andmehulga kasv ja kui tihti tasub allikast andmeid pärida?
+2. **Kasutatavuse % allika kohta** — kui suur osa kogutud tekstiandmetest on kvaliteetsed?
+3. **Peamised kvaliteedipuudused allika kohta** — miks andmed ei kvalifitseeru edaspidiseks kasutamiseks?
 
 > Dokument loetakse kasutatavaks, kui ta läbib andmekvaliteedi testid:
 > mitte-null väljad, piisav pikkus (≥100 tähemärki), korrektne keel (eesti),
@@ -57,9 +56,9 @@ flowchart LR
 
 | Kiht | Roll |
 |------|------|
-| `raw` | Hoiab allika andmeid töötlemata kujul täpselt nii nagu API tagastas. Kirjeid ei muudeta ega kustutata. |
-| `staging` | Puhastatud ja normaliseeritud andmed: veergude nimed ühtlustatud, tüübid konverteeritud, duplikaadid eemaldatud. |
-| `mart` | Agregeeritud tabelid dashboardi jaoks: dokumentide arv allika ja kuupäeva järgi, kvaliteedistatistika allika kohta. |
+| `staging` |  (toorandmed)Hoiab API-st ja scraperi-st saadud dokumendid võimalikult allikalähedaselt. Iga käivitus lisab ainult uued read (ON CONFLICT DO NOTHING). Vanad andmed jäävad alles. |
+| `intermediate` | stg_riigikogu, stg_rahvaalgatus, stg_wikipedia — puhastatud ja normaliseeritud vaated toorandmetest. Lisab kvaliteedilipud (has_title, has_sufficient_text, has_date).|
+| `mart` | fct_documents ühendab kõik allikad üheks faktitabeliks. mart_source_quality arvutab mõõdikud allika ja päeva lõikes (sõnade arv, kasutatavuse %, kvaliteedipuudused). |
 
 ---
 
