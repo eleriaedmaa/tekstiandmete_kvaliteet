@@ -78,7 +78,7 @@ flowchart LR
 | Vastutus | Täitja |
 |----------|--------|
 | Repo, Docker, Airflow DAG-id, dbt aluspõhi, Riigikogu integratsioon, dashboard | Eleri |
-| Rahvaalgatus + Vikipeedia API sissevõtt, dbt kvaliteeditestid | Evelin |
+| Rahvaalgatuse API, dbt kvaliteeditestid | Evelin |
 | CSV seed-id, uute/vanade dokumentide eristamise loogika, README, video koordineerimine | Liis |
 
 ---
@@ -87,7 +87,7 @@ flowchart LR
 
 | Risk | Tõenäosus | Leevendus |
 |------|-----------|-----------|
-| Riigikogu API muudab struktuuri või läheb maas | keskmine | Raw-kiht salvestab vastuse muutmata kujul; staging eraldab sõltuvuse API struktuurist |
+| Riigikogu API on maas | keskmine | Raw-kiht salvestab vastuse muutmata kujul; staging eraldab sõltuvuse API struktuurist |
 | Algajad takerduvad dbt/Airflow seadistusse | kõrge | Edasijõudnu seadistab keskkonna ette ja kirjutab koodimallid; algajad täidavad malli |
 | Vikipeedia API rate-limit | madal | Lisame viivituse päringute vahele, kasutame `continue`-parameetrit lehekülgede vahel |
 | Evelin on puhkusel 1.–7. juunil (nädal 3) | teada | Evelin teeb oma ülesanded valmis enne 1. juunit; video salvestab ette |
