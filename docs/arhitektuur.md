@@ -6,101 +6,77 @@ Kui palju kvaliteetset eestikeelset teksti on võimalik regulaarselt koguda vali
 
 ## Mõõdikud
 
-1. **Kasutatava teksti kogumaht sõnades allika kohta ajas** - kui järjepidev on andmehulga kasv ja kui tihti tasub allikast andmeid pärida?
-2. **Kasutatavuse % allika kohta** - kui suur osa kogutud tekstiandmetest on kvaliteetsed?
-3. **Peamised kvaliteedipuudused allika kohta** - miks andmed ei kvalifitseeru edaspidiseks kasutamiseks?
+1. Uute sõnade lisandumine ajas allika kohta — näitab mahtu ja aitab tuvastada optimaalse kogumissageduse.
+2. Kasutatavuse % allika kohta — kui suur osa kogutud tekstist läbib kvaliteedikontrolli.
+3. Peamised kvaliteedipuudused allika kohta — miks tekst ei kvalifitseeru (pealkiri puudub, tekst liiga lühike, duplikaat jne).
 
-> Dokument loetakse kasutatavaks, kui ta läbib andmekvaliteedi testid:
-> mitte-null väljad, piisav pikkus (≥100 tähemärki), korrektne keel (eesti),
-> duplikaatide puudumine.
+## Andmeallikad
 
----
+| Allikas | Tüüp | Muutuvus ajas | Kasutus |
+|---|---|---|---|
+| Riigikogu API | Avalik HTTP API | Uueneb istungipäevadel | Põhiandmevoog — istungite dokumendid ja stenogrammid |
+| Rahvaalgatus.ee API + scraper | Avalik HTTP API + HTML scraper | Uueneb reaalajas | Põhiandmevoog — algatuste metaandmed (API) ja täistekst (scraper) |
+| Eesti Wikipedia | MediaWiki HTTP API | Uueneb reaalajas | Põhiandmevoog — artiklite täistekst |
+
+Kõik kolm allikat on avalikud ja ei nõua autentimist. Rahvaalgatus.ee puhul tagastab API ainult metaandmed; täistekst tõmmatakse eraldi HTTP scraperига avalikelt lehekülgedelt (`robots.txt`: `Disallow:` — kõik lubatud).
 
 ## Andmevoog
 
 ```mermaid
 flowchart LR
-    SCH["Airflow scheduler"]
+    rk_api[Riigikogu API] --> ingest_rk[ingest_riigikogu.py]
+    ra_api[Rahvaalgatus API] --> ingest_ra[ingest_rahvaalgatus.py]
+    ra_web[rahvaalgatus.ee lehed] --> ingest_ra
+    wp_api[Wikipedia API] --> ingest_wp[ingest_wikipedia.py]
 
-    SCH -->|daily| B1["riigikogu_ingest.py"]
-    SCH -->|daily| B2["rahvaalgatus_ingest.py"]
-    SCH -->|daily| B3["wikipedia_ingest.py"]
-    SCH -->|BashOperator| TEST["dbt run + dbt test"]
+    ingest_rk --> stg_rk[(staging.riigikogu_documents_raw)]
+    ingest_ra --> stg_ra[(staging.rahvaalgatus_documents_raw)]
+    ingest_wp --> stg_wp[(staging.wikipedia_documents_raw)]
 
-    B1 -->|Airflow PythonOperator| R1[("raw.riigikogu_raw")]
-    B2 -->|Airflow PythonOperator| R2[("raw.rahvaalgatus_raw")]
-    B3 -->|Airflow PythonOperator| R3[("raw.wikipedia_raw")]
+    stg_rk --> dbt[dbt transformatsioon]
+    stg_ra --> dbt
+    stg_wp --> dbt
 
-    SEED["seeds/allikad.csv"] -->|dbt seed| DSEED[("staging.allikad")]
+    dbt --> stg_views[staging vaated\nstg_riigikogu\nstg_rahvaalgatus\nstg_wikipedia]
+    stg_views --> fct[(mart.fct_documents)]
+    fct --> mart_quality[(mart.mart_source_quality)]
 
-    R1 -->|dbt staging| S1[("staging.stg_riigikogu")]
-    R2 -->|dbt staging| S2[("staging.stg_rahvaalgatus")]
-    R3 -->|dbt staging| S3[("staging.stg_wikipedia")]
+    mart_quality --> dashboard[Streamlit näidikulaud]
+    fct --> tests[dbt testid]
 
-    S1 -->|dbt marts| M1[("mart.allikate_maht")]
-    S2 -->|dbt marts| M1
-    S3 -->|dbt marts| M1
-    S1 -->|dbt marts| M2[("mart.kvaliteet")]
-    S2 -->|dbt marts| M2
-    S3 -->|dbt marts| M2
-    DSEED --> M1
-    DSEED --> M2
-
-    M1 --> DASH["Metabase dashboard"]
-    M2 --> DASH
+    prefect[Prefect scheduler\nigal ööl kell 06:00] --> ingest_rk
+    prefect --> ingest_ra
+    prefect --> ingest_wp
 ```
-
----
 
 ## Andmebaasi kihid
 
 | Kiht | Roll |
-|------|------|
-| `staging` |  (toorandmed)Hoiab API-st ja scraperi-st saadud dokumendid võimalikult allikalähedaselt. Iga käivitus lisab ainult uued read (ON CONFLICT DO NOTHING). Vanad andmed jäävad alles. |
-| `intermediate` | stg_riigikogu, stg_rahvaalgatus, stg_wikipedia — puhastatud ja normaliseeritud vaated toorandmetest. Lisab kvaliteedilipud (has_title, has_sufficient_text, has_date).|
-| `mart` | fct_documents ühendab kõik allikad üheks faktitabeliks. mart_source_quality arvutab mõõdikud allika ja päeva lõikes (sõnade arv, kasutatavuse %, kvaliteedipuudused). |
+|---|---|
+| `staging` (toorandmed) | Hoiab API-st ja scraperi-st saadud dokumendid võimalikult allikalähedaselt. Iga käivitus lisab ainult uued read (`ON CONFLICT DO NOTHING`). Vanad andmed jäävad alles. |
+| `staging` (dbt vaated) | `stg_riigikogu`, `stg_rahvaalgatus`, `stg_wikipedia` — puhastatud ja normaliseeritud vaated toorandmetest. Lisab kvaliteedilipud (`has_title`, `has_sufficient_text`, `has_date`). |
+| `mart` | `fct_documents` ühendab kõik allikad üheks faktitabeliks. `mart_source_quality` arvutab mõõdikud allika ja päeva lõikes (sõnade arv, kasutatavuse %, kvaliteedipuudused). |
 
----
-
-## Andmeallikad
-
-| Allikas | Tüüp | Ajas muutuv? | Roll |
-|---------|------|--------------|------|
-| Riigikogu API | API (REST/JSON) | Jah, istungipäevadel | Põhiandmevoog — stenogrammid, eelnõud, päevakorrad |
-| Rahvaalgatus.ee API | API (REST/JSON) | Jah, reaalajas | Põhiandmevoog — kodanike algatused ja allkirjad |
-| Vikipeedia (et) API | API (MediaWiki) | Jah, reaalajas | Põhiandmevoog — eestikeelsed artiklid |
-| seeds/allikad.csv | Staatiline CSV (dbt seed) | Ei | Kõrvaltabel — allikate metaandmed, aitab eristada uut vanast |
-
----
+Iga töövoo käivitus saab unikaalse `run_id`. Staging toorandmed kasvavad kumulatiivselt. Mart tabelid ehitatakse iga käivitusega uuesti — näidikulaud loeb alati viimast seisu.
 
 ## Tööjaotus
 
-| Vastutus | Täitja |
-|----------|--------|
-| Repo, Docker, Airflow DAG-id, dbt aluspõhi, Riigikogu integratsioon, dashboard | Eleri |
-| Rahvaalgatuse API, dbt kvaliteeditestid | Evelin |
-| CSV seed-id, uute/vanade dokumentide eristamise loogika, README, video koordineerimine | Liis |
-
----
+| Liige | Roll | Vastutus |
+|---|---|---|
+| Mina (edasijõudnud) | Arhitekt + pipeline | Prefect pipeline, Docker seadistus, dbt transformatsioonid |
+| Kolleeg E (algaja) | Andmeallikate omanik | Riigikogu ja Wikipedia ingest-skriptid |
+| Kolleeg L (algaja) | Kvaliteet + visualisatsioon | dbt testid, Streamlit näidikulaud |
 
 ## Riskid
 
-| Risk | Tõenäosus | Leevendus |
-|------|-----------|-----------|
-| Riigikogu API on maas | keskmine | Raw-kiht salvestab vastuse muutmata kujul; staging eraldab sõltuvuse API struktuurist |
-| Algajad takerduvad dbt/Airflow seadistusse | kõrge | Edasijõudnu seadistab keskkonna ette ja kirjutab koodimallid; algajad täidavad malli |
-| Vikipeedia API rate-limit | madal | Lisame viivituse päringute vahele, kasutame `continue`-parameetrit lehekülgede vahel |
-| Evelin on puhkusel 1.–7. juunil (nädal 3) | teada | Evelin teeb oma ülesanded valmis enne 1. juunit; video salvestab ette |
-| Duplikaadid korduvpäringute vahel | kõrge | Hoiame `raw` tabelis viimase päringu `ingested_at` ajatempli ja filtreerime staging-kihis |
-
----
+| Risk | Mõju | Maandus |
+|---|---|---|
+| Rahvaalgatus.ee muudab HTML struktuuri | Scraper ei leia teksti | Scraper logib vead; metaandmed jäävad alles; tekst märgitakse puuduvaks |
+| Riigikogu API ei vasta | Andmeid ei lisandu | Prefect `retries=2`; järgmine käivitus proovib uuesti |
+| Wikipedia artikkel kustutatakse | Vana tekst jääb staging-isse | `ON CONFLICT DO UPDATE` uuendab teksti; kustutatud artikleid ei eemaldata automaatselt |
+| dbt testid ebaõnnestuvad | Vigased andmed jõuavad dashboardile | Prefect logib hoiatuse; pipeline ei peatu — andmed on nähtavad aga märgistatud |
+| Prefect scheduler ei käivitu | Andmed ei värskene | Kontrolli `docker compose logs pipeline`; ingest-skripte saab käivitada ka käsitsi |
 
 ## Privaatsus ja turve
 
-Projekt kasutab ainult avalikke andmeid (Riigikogu, Rahvaalgatus.ee,
-Vikipeedia). Isikuandmeid tahtlikult ei koguta. Riigikogu stenogrammides
-võivad esineda isikute nimed avaliku rolli kontekstis — see on avalik info.
-
-Andmebaasi paroolid ja muud saladused tulevad `.env` failist.
-Päris `.env` faili ei tohi GitHubi panna — see on `.gitignore`-s.
-Repos on ainult `.env.example` näidisväärtustega.
+Projekt kasutab ainult avalikke andmeid. Isikuandmeid ei koguta. Rahvaalgatus.ee algatused on avalikud kodanikuplatvorm — scraping on lubatud (`robots.txt: Disallow:` ilma väärtuseta). Andmebaasi kasutajanimi ja parool tulevad `.env` failist. Päris `.env` faili ei tohi reposse lisada — ainult `.env.example`.
