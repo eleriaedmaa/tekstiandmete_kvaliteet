@@ -54,7 +54,6 @@ flowchart LR
 | Kiht | Tüüp | Roll |
 |---|---|---|
 | `seeds/allikad.csv` | Staatiline tabel | Allikate nimekiri: nimi, base URL, kogumissagedus. Üks rida allika kohta. Muutub ainult kui lisandub uus allikas. |
-
 | `staging` | Tabel | API-st ja scraperilt saadud toorandmed. Iga käivitus lisab ainult uued read (`ON CONFLICT DO NOTHING`). Vanad andmed jäävad alles. |
 | `intermediate` | Vaade | Puhastamine + kvaliteedilipud (`is_long_enough`, `is_estonian`, `is_not_duplicate`) + sõnade loendamine (`word_count`). |
 | `marts` | Tabel | `fct_documents` ühendab kõik allikad. `mart_source_quality` arvutab mõõdikud allika ja päeva lõikes. |
