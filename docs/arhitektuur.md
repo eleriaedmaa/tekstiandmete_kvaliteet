@@ -37,11 +37,9 @@ flowchart LR
     wp_raw -->|dbt staging| int
     allikad -->|dbt staging| int
 
-    int -->|dbt marts| fct[(marts.fct_documents)]
-    int -->|dbt marts| quality[(marts.mart_source_quality)]
-
-    fct -->|dbt test| tests[dbt test]
-    quality -->|dbt test| tests
+    int -->|dbt test| tests[Quality tests]
+    tests -->|dbt marts| fct[(marts.fct_documents)]
+    tests -->|dbt marts| quality[(marts.mart_source_quality)]
 
     fct --> dashboard[Streamlit näidikulaud]
     quality --> dashboard
