@@ -17,7 +17,8 @@ Kui palju kvaliteetset eestikeelset teksti on võimalik regulaarselt koguda vali
 | Riigikogu API | Avalik HTTP API | Uueneb istungipäevadel | Põhiandmevoog — istungite dokumendid ja stenogrammid |
 | Rahvaalgatus.ee API + scraper | Avalik HTTP API + HTML scraper | Uueneb reaalajas | Põhiandmevoog — algatuste metaandmed (API) ja täistekst (scraper) |
 | Eesti Wikipedia | MediaWiki HTTP API | Uueneb reaalajas | Põhiandmevoog — artiklite täistekst |
-| `seeds/allikad.csv` | Staatiline dbt seed | Muutub ainult projekti muutmisel | Allikate nimekiri, URL-id, uuenussagedus |
+| `seeds/allikad.csv` | Staatiline dbt seed | Muutub ainult kui lisandub uus allikas | Allikate nimekiri, URL-id, kogumissagedus |
+| `seeds/teadaolevad_dokumendid.csv` | Staatiline dbt seed | Ei muutu pärast esimest käivitust | Olemasolevate dokumentide URL-id — duplikaatide vältimiseks esimesel ingest-käivitusel |
 
 Kõik kolm allikat on avalikud ja ei nõua autentimist. Rahvaalgatus.ee puhul tagastab API ainult metaandmed; täistekst tõmmatakse eraldi HTTP scraperига avalikelt lehekülgedelt (`robots.txt`: `Disallow:` — kõik lubatud).
 
@@ -52,7 +53,8 @@ flowchart LR
 
 | Kiht | Tüüp | Roll |
 |---|---|---|
-| `seeds` | Staatiline tabel | Allikate nimekiri URL-ide, nimede ja kogumissagedusega. Muutub ainult projekti muutmisel. |
+| `seeds/allikad.csv` | Staatiline tabel | Allikate nimekiri: nimi, base URL, kogumissagedus. Üks rida allika kohta. Muutub ainult kui lisandub uus allikas. |
+| `seeds/teadaolevad_dokumendid.csv` | Staatiline tabel | Ühekordne snapshot enne pipeline käivitamist teadaolevatest dokumentide URL-idest. Ingest-skript kasutab seda esimesel käivitusel duplikaatide vältimiseks. Pärast käivitamist uusi dokumente CSV-sse ei lisata — kõik edasised andmed salvestuvad `staging.*_raw` tabelitesse. |
 | `staging` | Tabel | API-st ja scraperист saadud toorandmed. Iga käivitus lisab ainult uued read (`ON CONFLICT DO NOTHING`). Vanad andmed jäävad alles. |
 | `intermediate` | Vaade | Puhastamine + kvaliteedilipud (`is_long_enough`, `is_estonian`, `is_not_duplicate`) + sõnade loendamine (`word_count`). |
 | `marts` | Tabel | `fct_documents` ühendab kõik allikad. `mart_source_quality` arvutab mõõdikud allika ja päeva lõikes. |
