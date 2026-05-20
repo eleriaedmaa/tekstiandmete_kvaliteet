@@ -23,15 +23,39 @@ Kõik kolm allikat on avalikud ja ei nõua autentimist. Rahvaalgatus.ee puhul ta
 
 ## Andmevoog
 
+```mermaid
+flowchart LR
+    csv[seeds/allikad.csv] -->|dbt seed| allikad[(staging.allikad)]
 
+    rk[Riigikogu API] -->|Airflow PythonOperator| rk_raw[(staging.riigikogu_raw)]
+    ra[Rahvaalgatus API + scraper] -->|Airflow PythonOperator| ra_raw[(staging.rahvaalgatus_raw)]
+    wp[Wikipedia API] -->|Airflow PythonOperator| wp_raw[(staging.wikipedia_raw)]
+
+    rk_raw -->|dbt staging| int[intermediate.int_documents]
+    ra_raw -->|dbt staging| int
+    wp_raw -->|dbt staging| int
+    allikad -->|dbt staging| int
+
+    int -->|dbt marts| fct[(marts.fct_documents)]
+    int -->|dbt marts| quality[(marts.mart_source_quality)]
+
+    fct --> dashboard[Streamlit näidikulaud]
+    quality --> dashboard
+
+    airflow[Airflow scheduler] -->|"@daily"| rk
+    airflow -->|"@daily"| ra
+    airflow -->|"@daily"| wp
+    airflow -->|BashOperator| dbt[dbt run + dbt test]
+```
 
 ## Andmebaasi kihid
 
 | Kiht | Tüüp | Roll |
 |---|---|---|
+| `seeds` | Staatiline tabel | Allikate nimekiri URL-ide, nimede ja kogumissagedusega. Muutub ainult projekti muutmisel. |
 | `staging` | Tabel | API-st ja scraperист saadud toorandmed. Iga käivitus lisab ainult uued read (`ON CONFLICT DO NOTHING`). Vanad andmed jäävad alles. |
-| `intermediate` | Vaade | Puhastamine + kvaliteedilipud (`is_long_enough`, `is_estonian`, `is_not_duplicate`) + sõnade loendamine. |
-| `mart` | Tabel | `fct_documents` ühendab kõik allikad. `mart_source_quality` arvutab mõõdikud allika ja päeva lõikes. |
+| `intermediate` | Vaade | Puhastamine + kvaliteedilipud (`is_long_enough`, `is_estonian`, `is_not_duplicate`) + sõnade loendamine (`word_count`). |
+| `marts` | Tabel | `fct_documents` ühendab kõik allikad. `mart_source_quality` arvutab mõõdikud allika ja päeva lõikes. |
 
 Iga töövoo käivitus saab unikaalse `run_id`. Staging toorandmed kasvavad kumulatiivselt. Mart tabelid ehitatakse iga käivitusega uuesti — näidikulaud loeb alati viimast seisu.
 
