@@ -26,7 +26,7 @@ Kõik kolm allikat on avalikud ja ei nõua autentimist. Rahvaalgatus.ee puhul ta
 
 ```mermaid
 flowchart LR
-    csv[seeds/allikad.csv] -->|dbt seed| allikad[(staging.allikad)]
+    csv[seeds/allikad.csv] -->|dbt seed| allikad[(seeds.allikad)]
 
     rk[Riigikogu API] -->|Airflow PythonOperator| rk_raw[(staging.riigikogu_raw)]
     ra[Rahvaalgatus API + scraper] -->|Airflow PythonOperator| ra_raw[(staging.rahvaalgatus_raw)]
