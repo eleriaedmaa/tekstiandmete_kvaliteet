@@ -23,7 +23,11 @@ Kui palju kvaliteetset eestikeelset teksti on võimalik regulaarselt koguda vali
 Kõik kolm allikat on avalikud ja ei nõua autentimist. Rahvaalgatus.ee puhul tagastab API ainult metaandmed; täistekst tõmmatakse eraldi HTTP scraperile avalikelt lehekülgedelt (`robots.txt`: `Disallow:` — kõik lubatud).
 
 ## Andmevoog
+```mermaid
+flowchart LR
+    csv[seeds/allikad.csv] -->|dbt seed| allikad[(seeds.allikad)]
 
+    rk[Riigikogu API] -->|Airflow PythonOperator| rk_raw[(staging.riigikogu_raw)]
     ra[Rahvaalgatus API + scraper] -->|Airflow PythonOperator| ra_raw[(staging.rahvaalgatus_raw)]
     wp[Wikipedia API] -->|Airflow PythonOperator| wp_raw[(staging.wikipedia_raw)]
 
@@ -44,7 +48,6 @@ Kõik kolm allikat on avalikud ja ei nõua autentimist. Rahvaalgatus.ee puhul ta
     airflow -->|"@daily"| wp
     airflow -->|BashOperator| dbt[dbt run]
 ```
-
 ## Andmebaasi kihid
 
 | Kiht | Tüüp | Roll |
