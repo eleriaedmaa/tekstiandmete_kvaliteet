@@ -40,6 +40,9 @@ flowchart LR
     int -->|dbt marts| fct[(marts.fct_documents)]
     int -->|dbt marts| quality[(marts.mart_source_quality)]
 
+    fct -->|dbt test| tests[dbt test]
+    quality -->|dbt test| tests
+
     fct --> dashboard[Streamlit näidikulaud]
     quality --> dashboard
 
