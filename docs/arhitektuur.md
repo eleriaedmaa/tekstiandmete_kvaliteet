@@ -71,10 +71,9 @@ Iga töövoo käivitus saab unikaalse `run_id`. Staging toorandmed kasvavad kumu
 
 | Risk | Mõju | Maandus |
 |---|---|---|
-| Rahvaalgatus.ee muudab HTML struktuuri | Scraper ei leia teksti | Scraper logib vead; metaandmed jäävad alles; tekst märgitakse puuduvaks |
-| Riigikogu API ei vasta | Andmeid ei lisandu | Airflow `retries=2`; järgmine käivitus proovib uuesti |
-| Wikipedia artikkel kustutatakse | Vana tekst jääb staging-isse | `ON CONFLICT DO UPDATE` uuendab teksti |
-| dbt testid ebaõnnestuvad | Vigased andmed jõuavad dashboardile | Airflow märgib DAG punaseks; andmed on nähtavad aga märgistatud |
+| Riigikogu, Rahvaalgatuse ja/või Vikipeedia API ei vasta | (kõiki) andmeid ei lisandu | Airflow `retries=2`; järgmine käivitus proovib uuesti |
+| API muudab väljade nimesid | Airflow Python task jookseb kokku | Skript valideerib nõutud väljad enne kirjutamist; vigased read jäävad logidesse |
+| dbt testid ebaõnnestuvad | Näidikulaud võib näidata vigaseid andmeid | dbt test task märgib Airflow töövoo ebaõnnestunuks; Streamlit näitab endiselt viimaseid edukaid andmeid |
 | Airflow scheduler ei käivitu | Andmed ei värskene | Kontrolli `docker compose logs airflow`; ingest-skripte saab käivitada ka käsitsi |
 
 ## Privaatsus ja turve
