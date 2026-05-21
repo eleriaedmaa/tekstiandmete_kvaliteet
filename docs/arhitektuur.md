@@ -62,9 +62,9 @@ Iga töövoo käivitus saab unikaalse `run_id`. Staging toorandmed kasvavad kumu
 
 | Liige | Roll | Vastutus |
 |---|---|---|
-| Eleri | Andmeallika ja transformatsioonide omanik | Kirjutab sissevõtu loogika Riigikogu API najal, transformatsioonid ja mõõdikute arvutuse, Airflow DAG-id, Docker seadistus |
-| Evelin | Kvaliteedi omanik | Rahvaalgatus.ee API kontroll, kirjutab dbt kvaliteeditestid, valmistab ette mõõdikute arvutuse loogika |
-| Liis | Näidikulaua omanik | Wikipedia API kontroll, valmistab ette staatilise andmetabeli (seeds), valmistab ette näidikulaua vaated |
+| Eleri | Andmeallika ja transformatsioonide omanik | Hoiab andmevoo töökorras — sissevõtust transformatsioonide ja orkestreerimiseni |
+| Evelin | Kvaliteedi omanik | Kirjutab ja hoiab dbt testid ajakohasena |
+| Liis | Näidikulaua omanik | Haldab staatilisi seed-tabeleid ja näidikulauda |
 
 ## Riskid
 
@@ -77,4 +77,4 @@ Iga töövoo käivitus saab unikaalse `run_id`. Staging toorandmed kasvavad kumu
 
 ## Privaatsus ja turve
 
-Projekt kasutab ainult avalikke andmeid. Isikuandmeid ei koguta. Rahvaalgatus.ee algatused on avalik kodanikuplatvorm — scraping on lubatud (`robots.txt: Disallow:` ilma väärtuseta). Andmebaasi kasutajanimi ja parool tulevad `.env` failist. Päris `.env` faili ei tohi reposse lisada — ainult `.env.example`.
+Projekt kasutab ainult avalikke andmeid. Isikuandmeid ei koguta. Andmebaasi kasutajanimi ja parool tulevad `.env` failist. Päris `.env` faili ei tohi reposse lisada — ainult `.env.example`.
