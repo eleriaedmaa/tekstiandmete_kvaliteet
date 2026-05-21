@@ -73,7 +73,7 @@ Iga töövoo käivitus saab unikaalse `run_id`. Staging toorandmed kasvavad kumu
 | Riigikogu, Rahvaalgatuse ja/või Vikipeedia API ei vasta | (kõiki) andmeid ei lisandu | Airflow `retries=2`; järgmine käivitus proovib uuesti |
 | API muudab väljade nimesid | Airflow Python task jookseb kokku | Skript valideerib nõutud väljad enne kirjutamist; vigased read jäävad logidesse |
 | dbt testid ebaõnnestuvad | Näidikulaud võib näidata vigaseid andmeid | dbt test task märgib Airflow töövoo ebaõnnestunuks; Streamlit näitab endiselt viimaseid edukaid andmeid |
-| Airflow scheduler ei käivitu | Andmed ei värskene | Kontrolli `docker compose logs airflow`; ingest-skripte saab käivitada ka käsitsi |
+| Airflow scheduler ei käivitu | Andmed ei uuene | Kontrolli `docker compose logs airflow`; ingest-skripte saab käivitada ka käsitsi |
 
 ## Privaatsus ja turve
 
