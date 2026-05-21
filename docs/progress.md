@@ -2,12 +2,12 @@
 
 ## Mis on valmis
 
-- [x] Docker Compose käivitab kõik teenused
-- [x] Andmeid saadakse Riigikogu API-st kätte
-- [x] Andmed laetakse `raw` kihti
-- [x] Vähemalt üks transformatsioon toimib (stg_riigikogu)
-- [x] Vähemalt üks näidikulaud on nähtaval (Metabase)
-- [x] Vähemalt üks andmekvaliteedi test läbib (not_null, unique)
+- [ ] Docker Compose käivitab kõik teenused
+- [ ] Andmeid saadakse Riigikogu API-st kätte
+- [ ] Andmed laetakse `raw` kihti
+- [ ] Vähemalt üks transformatsioon toimib (stg_riigikogu)
+- [ ] Vähemalt üks näidikulaud on nähtaval (Metabase)
+- [ ] Vähemalt üks andmekvaliteedi test läbib (not_null, unique)
 - [ ] Rahvaalgatus.ee API sissevõtt valmis
 - [ ] Vikipeedia API sissevõtt valmis
 - [ ] Kõik andmekvaliteedi testid rohelised
