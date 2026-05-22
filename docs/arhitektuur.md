@@ -26,33 +26,29 @@ Allikad on avalikud ja APId ei nõua autentimist. Rahvaalgatus.ee puhul tagastab
 
 ```mermaid
 flowchart LR
-    csv[seeds/allikad.csv] -->|dbt seed| allikad[(marts.allikad)]
-    tdok[seeds/teadaolevad_dokumendid.csv] -->|dbt seed| seed[(marts.teadaolevad_dokumendid)]
+    subgraph allikad[Andmeallikad]
+        rk[Riigikogu API]
+        ra[Rahvaalgatus API + scraper]
+        wp[Wikipedia API]
+    end
 
-    seed -->|URL-kontroll enne tõmbamist| rk
-    seed -->|URL-kontroll enne tõmbamist| ra
-    seed -->|URL-kontroll enne tõmbamist| wp
+    subgraph staging[Staging]
+        raw[(riigikogu_raw\nrahvaalgatus_raw\nwikipedia_raw)]
+    end
 
-    rk[Riigikogu API] -->|Airflow PythonOperator| rk_raw[(staging.riigikogu_raw)]
-    ra[Rahvaalgatus API + scraper] -->|Airflow PythonOperator| ra_raw[(staging.rahvaalgatus_raw)]
-    wp[Wikipedia API] -->|Airflow PythonOperator| wp_raw[(staging.wikipedia_raw)]
+    subgraph transform[Transformatsioon - dbt]
+        int[int_documents]
+        fct[(fct_documents)]
+        quality[(mart_source_quality)]
+    end
 
-    rk_raw -->|dbt staging| int[intermediate.int_documents]
-    ra_raw -->|dbt staging| int
-    wp_raw -->|dbt staging| int
-    seed -->|URL-põhine duplikaadikontroll| int
-
-    int -->|dbt test| tests[Quality tests]
-    tests -->|dbt marts| fct[(marts.fct_documents)]
-    tests -->|dbt marts| quality[(marts.mart_source_quality)]
-
+    seed[seeds/teadaolevad_dokumendid.csv] -->|URL-kontroll| allikad
+    allikad -->|Airflow @daily| raw
+    raw --> int
+    int --> fct
+    int --> quality
     fct --> dashboard[Streamlit näidikulaud]
     quality --> dashboard
-
-    airflow[Airflow scheduler] -->|"@daily"| rk
-    airflow -->|"@daily"| ra
-    airflow -->|"@daily"| wp
-    airflow -->|BashOperator| dbt[dbt run]
 ```
 
 ## Andmebaasi kihid
@@ -60,7 +56,7 @@ flowchart LR
 | Kiht | Tüüp | Roll |
 |---|---|---|
 | `staging` | Tabel | API-st ja scraperilt saadud toorandmed. Iga käivitus lisab ainult uued read (`ON CONFLICT DO NOTHING`). Vanad andmed jäävad alles. |
-| `intermediate` | Vaade | Puhastamine + kvaliteedilipud (`is_long_enough`, `is_estonian`, `is_not_duplicate`) + sõnade loendamine (`word_count`). |
+| `intermediate` | Vaade | Puhastamine + kvaliteedilipud (`is_long_enough`, `is_estonian`, `is_not_duplicate`) + sõnade loendamine (`word_count`). `is_not_duplicate` tuvastab tekstihashi järgi staging-sisesed duplikaadid. |
 | `marts` | Tabel | `fct_documents` ühendab kõik allikad. `mart_source_quality` arvutab mõõdikud allika ja päeva lõikes. |
 
 Iga töövoo käivitus saab unikaalse `run_id`. Staging toorandmed kasvavad kumulatiivselt. Mart tabelid ehitatakse iga käivitusega uuesti — näidikulaud loeb alati viimast seisu.
