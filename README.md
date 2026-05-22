@@ -55,12 +55,12 @@ Allikad on avalikud ja APId ei nõua autentimist. Rahvaalgatus.ee puhul tagastab
 ## Stack
 
 | Komponent | Tööriist |
-|-----------|---------|
-| Sissevõtt | [Python / Airflow / muu] |
-| Transformatsioon | [SQL / dbt / muu] |
+|---|---|
+| Sissevõtt | Python (requests, BeautifulSoup) |
+| Transformatsioon | dbt (SQL) |
 | Andmehoidla | PostgreSQL |
-| Näidikulaud | [Superset / Streamlit / muu] |
-| Orkestreerimine | [Airflow / cron / muu] |
+| Näidikulaud | Streamlit |
+| Orkestreerimine | Apache Airflow |
 
 ## Käivitamine
 
