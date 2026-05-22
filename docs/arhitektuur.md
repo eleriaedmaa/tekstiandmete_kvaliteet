@@ -23,9 +23,15 @@ Kui palju kvaliteetset eestikeelset teksti on võimalik regulaarselt koguda vali
 Allikad on avalikud ja APId ei nõua autentimist. Rahvaalgatus.ee puhul tagastab API ainult metaandmed; täistekst tõmmatakse eraldi HTTP scraperile avalikelt lehekülgedelt (`robots.txt`: `Disallow:` — kõik lubatud).
 
 ## Andmevoog
+
 ```mermaid
 flowchart LR
-    csv[seeds/allikad.csv] -->|dbt seed| allikad[(seeds.allikad)]
+    csv[seeds/allikad.csv] -->|dbt seed| allikad[(marts.allikad)]
+    tdok[seeds/teadaolevad_dokumendid.csv] -->|dbt seed| seed[(marts.teadaolevad_dokumendid)]
+
+    seed -->|URL-kontroll enne tõmbamist| rk
+    seed -->|URL-kontroll enne tõmbamist| ra
+    seed -->|URL-kontroll enne tõmbamist| wp
 
     rk[Riigikogu API] -->|Airflow PythonOperator| rk_raw[(staging.riigikogu_raw)]
     ra[Rahvaalgatus API + scraper] -->|Airflow PythonOperator| ra_raw[(staging.rahvaalgatus_raw)]
@@ -34,7 +40,7 @@ flowchart LR
     rk_raw -->|dbt staging| int[intermediate.int_documents]
     ra_raw -->|dbt staging| int
     wp_raw -->|dbt staging| int
-    allikad -->|dbt staging| int
+    seed -->|URL-põhine duplikaadikontroll| int
 
     int -->|dbt test| tests[Quality tests]
     tests -->|dbt marts| fct[(marts.fct_documents)]
@@ -48,6 +54,7 @@ flowchart LR
     airflow -->|"@daily"| wp
     airflow -->|BashOperator| dbt[dbt run]
 ```
+
 ## Andmebaasi kihid
 
 | Kiht | Tüüp | Roll |
