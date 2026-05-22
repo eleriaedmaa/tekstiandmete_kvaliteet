@@ -12,31 +12,34 @@ Kui palju kvaliteetset eestikeelset teksti on võimalik regulaarselt koguda vali
 
 ## Arhitektuur
 
+
 ```mermaid
 flowchart LR
-    csv[seeds/allikad.csv] -->|dbt seed| allikad[(seeds.allikad)]
+    subgraph allikad[Andmeallikad]
+        rk[Riigikogu API]
+        ra[Rahvaalgatus API + scraper]
+        wp[Wikipedia API]
+    end
 
-    rk[Riigikogu API] -->|Airflow PythonOperator| rk_raw[(staging.riigikogu_raw)]
-    ra[Rahvaalgatus API + scraper] -->|Airflow PythonOperator| ra_raw[(staging.rahvaalgatus_raw)]
-    wp[Wikipedia API] -->|Airflow PythonOperator| wp_raw[(staging.wikipedia_raw)]
+    subgraph staging[Staging]
+        raw[(riigikogu_raw\nrahvaalgatus_raw\nwikipedia_raw)]
+    end
 
-    rk_raw -->|dbt staging| int[intermediate.int_documents]
-    ra_raw -->|dbt staging| int
-    wp_raw -->|dbt staging| int
-    allikad -->|dbt staging| int
+    subgraph transform[Transformatsioon - dbt]
+        int[int_documents]
+        fct[(fct_documents)]
+        quality[(mart_source_quality)]
+    end
 
-    int -->|dbt test| tests[Quality tests]
-    tests -->|dbt marts| fct[(marts.fct_documents)]
-    tests -->|dbt marts| quality[(marts.mart_source_quality)]
-
+    seed[seeds/teadaolevad_dokumendid.csv] -->|"ühekordne migratsioon"| raw
+    allikad -->|Airflow @daily| raw
+    raw --> int
+    int --> fct
+    int --> quality
     fct --> dashboard[Streamlit näidikulaud]
     quality --> dashboard
-
-    airflow[Airflow scheduler] -->|"@daily"| rk
-    airflow -->|"@daily"| ra
-    airflow -->|"@daily"| wp
-    airflow -->|BashOperator| dbt[dbt run]
 ```
+
 
 Täpsem kirjeldus: [`docs/arhitektuur.md`](docs/arhitektuur.md)
 
