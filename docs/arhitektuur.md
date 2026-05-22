@@ -42,7 +42,7 @@ flowchart LR
         quality[(mart_source_quality)]
     end
 
-    seed[seeds/teadaolevad_dokumendid.csv] -->|URL-kontroll| allikad
+    seed[seeds/teadaolevad_dokumendid.csv] -->|"ühekordne migratsioon"| raw
     allikad -->|Airflow @daily| raw
     raw --> int
     int --> fct
@@ -60,6 +60,7 @@ flowchart LR
 | `marts` | Tabel | `fct_documents` ühendab kõik allikad. `mart_source_quality` arvutab mõõdikud allika ja päeva lõikes. |
 
 Iga töövoo käivitus saab unikaalse `run_id`. Staging toorandmed kasvavad kumulatiivselt. Mart tabelid ehitatakse iga käivitusega uuesti — näidikulaud loeb alati viimast seisu.
+
 
 ## Tööjaotus
 
