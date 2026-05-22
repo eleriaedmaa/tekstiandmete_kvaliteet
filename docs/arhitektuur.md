@@ -77,4 +77,4 @@ Iga töövoo käivitus saab unikaalse `run_id`. Staging toorandmed kasvavad kumu
 
 ## Privaatsus ja turve
 
-Projekt kasutab ainult avalikke andmeid. Isikuandmeid ei koguta. Andmebaasi kasutajanimi ja parool tulevad `.env` failist. Päris `.env` faili ei tohi reposse lisada — ainult `.env.example`.
+Projekt kasutab ainult avalikke andmeid. Isikuandmeid ei koguta. Vajalikud kasutajanimed ja paroolid tulevad `.env` failist. Päris `.env` faili ei tohi reposse lisada — ainult `.env.example`.
