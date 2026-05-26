@@ -87,15 +87,15 @@ docker compose up -d --build
 docker compose ps   # kõik teenused peaksid olema "running"
 
 # 5. Laadi ajaloolised andmed (ühekordne samm — ~35 MB, ~1 min)
-gunzip -k init/02_historical_data.sql.gz
-docker compose cp init/02_historical_data.sql analytics-db:/tmp/02_historical_data.sql
-docker compose exec analytics-db psql -U EKI -d eki_postgres -f /tmp/02_historical_data.sql
+docker compose cp init/02_historical_data.sql.gz analytics-db:/tmp/02_historical_data.sql.gz
+docker compose exec analytics-db bash -c "gunzip -c /tmp/02_historical_data.sql.gz | psql -U EKI -d eki_postgres"
 
 # 6. Laadi dbt seemned ja ehita mudelid
 docker compose exec airflow-apiserver bash -c "cd /opt/airflow/dbt_project && dbt seed --profiles-dir . && dbt run --profiles-dir ."
 
 # 7. Ava Airflow UI ja käivita DAG-id käsitsi
-#    http://localhost:8080  (kasutaja: airflow / parool: airflow)
+#    http://localhost:8080
+#    Kasutajanimi: airflow  |  Parool: airflow
 #    Soovituslik järjekord: riigikogu_pipeline → rahvaalgatus_pipeline → wikipedia_pipeline → dbt_pipeline
 
 # 8. Ava näidikulaud
