@@ -1,0 +1,37 @@
+version: 2
+
+models:
+  - name: int_documents
+    description: Kõigi allikate dokumendid ühes vaates koos kvaliteedilippudega.
+    columns:
+      - name: allikas
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ['riigikogu', 'rahvaalgatus', 'wikipedia']
+      - name: doc_id
+        data_tests:
+          - not_null
+      - name: word_count
+        data_tests:
+          - not_null
+      - name: is_long_enough
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [0, 1]
+      - name: is_estonian
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [0, 1]
+      - name: is_not_duplicate
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [0, 1]
+      - name: peamine_pohjus
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ['sobib', 'liiga_lyhike', 'vale_keel', 'duplikaat']

@@ -2,35 +2,40 @@
 
 ## Mis on valmis
 
-- [x] Kõik kolm andmete sissevõtu Airflow DAG-i käivituvad regulaarselt, kolmest allikast tuuakse iga päev uusi andmeid.
-- [x] Andmed laetakse staging kihti (`riigikogu_raw`, `rahvaalgatus_raw`, `wikipedia_raw`)
-- [x] dbt transformatsioonid toimivad otsast lõpuni (`stg_*` → `int_documents` → `fct_documents`, `mart_source_quality`, `mart_avaldamise_katvus`)
-- [x] Andmekvaliteedi testid on rohelised
-- [x] Streamlit näidikulaud näitab kõigi kolme mõõdiku MVPd
-- [x] Uus keskkond on võimalik püsti panna README juhendi järgi (sh ajaloolised andmed)
-- [x] Wikipedia DAG tõmbab ainult uusi artikleid (muudetud failid välja filtreeritud)
+- [x] Docker Compose käivitab kõik teenused
+- [x] Andmeid saadakse Riigikogu API-st kätte
+- [x] Andmed laetakse `raw` kihti
+- [x] Kõik transformatsioonid toimivad (stg_*, int_documents, fct_documents, mart_source_quality)
+- [x] Streamlit näidikulaud on nähtaval kolme mõõdikuga
+- [x] Vähemalt üks andmekvaliteedi test läbib (not_null, unique)
+- [x] Rahvaalgatus.ee API sissevõtt valmis (kõik ~1100 algatust)
+- [x] Vikipeedia API sissevõtt valmis (paginatsioon, igapäevane uuendus)
+- [x] Ajalooliste andmete ühekordne migratsioon tehtud (seeds → staging)
+- [ ] Kõik andmekvaliteedi testid rohelised (Evelin)
+
+Kõik kolm andmevoogu töötavad otsast lõpuni: API → staging → intermediate → marts →
+Streamlit. Airflow käivitab kõiki DAG-e igapäevaselt (`@daily`). Ajaloolised andmed
+(~139 000 URL-i) on migreeritud staging tabelitesse ja salvestatud
+`init/02_historical_data.sql.gz` failina uue keskkonna püstitamiseks.
 
 ## Järgmised sammud
 
-- Oodata Wikipedia backfilli lõppu, seejärel käivitada `dbt run` ja kontrollida ajaloolist katvust joonisel
-- Näidikulaua viimistlemine
-- Kokkuvõte, puudused ja edasiarendused README-sse kirja panna
+- Evelin: ülejäänud dbt kvaliteeditestid lisada ja roheliseks saada
+- Liis: näidikulaua viimistlemine ja seeds/allikad.csv kontrollimine
+- Kokkuvõte, puudused ja edasiarendused README-sse kirja panna (kõik)
 
 ## Mis takistab
 
-- Wikipedia ajalooliste andmete backfill (2016–2026) jookseb veel taustal — kuni see lõpeb, ei kajastu joonisel täielik ajalooline katvus.
-
-### Tehniline võlg
-- Airflow DAG-id kasutavad `retries=2`; tootmiskeskkonnas soovitav `retries=3`
-- `migrate_seed_to_staging.py` skript on ühekordne tööriist — võiks eemaldada
+- Rahvaalgatus.ee API tagastab algatused ilma offseti toeta (ignoreerimine leitud
+  ja parandatud — `limit=2000` toob kõik ~1100 algatust ühes päringus)
+- Vikipeedia API piirab päringute sagedust (429 vead) — migratsiooniskript kasutab
+  2-sekundilist pausi; igapäevane DAG töötab normaalselt
 
 ## Kontrollpunkt
 
-```bash
-# Kontrolli, et kõik teenused töötavad
-docker compose ps
+Viimased töövoo käivitused ja nende tulemus:
 
-# Viimased töövoo käivitused
+```bash
 docker compose exec analytics-db psql -U EKI -d eki_postgres -c "
 SELECT source_name, DATE(fetched_at) as kuupaev, docs_added, status
 FROM staging.pipeline_runs
