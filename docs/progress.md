@@ -6,11 +6,11 @@
 - [x] Andmeid saadakse Riigikogu API-st kätte
 - [x] Andmed laetakse `raw` kihti
 - [x] Kõik transformatsioonid toimivad (stg_*, int_documents, fct_documents, mart_source_quality)
-- [x] Streamlit näidikulaud on nähtaval kolme mõõdikuga
-- [x] Vähemalt üks andmekvaliteedi test läbib (not_null, unique)
-- [x] Rahvaalgatus.ee API sissevõtt valmis (kõik ~1100 algatust)
-- [x] Vikipeedia API sissevõtt valmis (paginatsioon, igapäevane uuendus)
-- [x] Ajalooliste andmete ühekordne migratsioon tehtud (seeds → staging)
+- [ ] Streamlit näidikulaud on nähtaval kolme mõõdikuga
+- [ ] Vähemalt üks andmekvaliteedi test läbib (not_null, unique)
+- [ ] Rahvaalgatus.ee API sissevõtt valmis 
+- [ ] Vikipeedia API sissevõtt valmis (paginatsioon, igapäevane uuendus)
+- [ ] Ajalooliste andmete ühekordne migratsioon tehtud (seeds → staging)
 - [ ] Kõik andmekvaliteedi testid rohelised (Evelin)
 
 Kõik kolm andmevoogu töötavad otsast lõpuni: API → staging → intermediate → marts →
