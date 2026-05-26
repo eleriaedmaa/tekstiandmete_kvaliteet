@@ -1,4 +1,4 @@
-# Tekstiandmete kvaliteet — Riigikogu + Rahvaalgatus + Vikipeedia → Airflow + dbt + Streamlit
+# EKI tekstiandmete grupp - Tekstiandmete kvaliteet
 
 Projekt kogub eestikeelset teksti kolmest avalikust allikast, transformeerib selle ühtsesse vormingusse ja näitab kvaliteedimõõdikuid Streamlit näidikulaual.
 
