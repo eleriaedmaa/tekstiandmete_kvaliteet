@@ -11,7 +11,7 @@
 - [ ] Rahvaalgatus.ee API sissevõtt valmis 
 - [ ] Vikipeedia API sissevõtt valmis (paginatsioon, igapäevane uuendus)
 - [ ] Ajalooliste andmete ühekordne migratsioon tehtud (seeds → staging)
-- [ ] Kõik andmekvaliteedi testid rohelised (Evelin)
+- [ ] Kõik andmekvaliteedi testid rohelised 
 
 Kõik kolm andmevoogu töötavad otsast lõpuni: API → staging → intermediate → marts →
 Streamlit. Airflow käivitab kõiki DAG-e igapäevaselt (`@daily`). Ajaloolised andmed
