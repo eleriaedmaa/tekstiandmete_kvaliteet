@@ -1,0 +1,59 @@
+version: 2
+
+models:
+  - name: stg_riigikogu
+    description: Puhastatud Riigikogu dokumendid.
+    columns:
+      - name: allikas
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ['riigikogu']
+      - name: doc_id
+        data_tests:
+          - not_null
+          - unique
+      - name: tekst
+        data_tests:
+          - not_null
+      - name: run_id
+        data_tests:
+          - not_null
+
+  - name: stg_rahvaalgatus
+    description: Puhastatud Rahvaalgatuse algatused.
+    columns:
+      - name: allikas
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ['rahvaalgatus']
+      - name: doc_id
+        data_tests:
+          - not_null
+          - unique
+      - name: tekst
+        data_tests:
+          - not_null
+      - name: run_id
+        data_tests:
+          - not_null
+
+  - name: stg_wikipedia
+    description: Puhastatud Wikipedia artiklid.
+    columns:
+      - name: allikas
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ['wikipedia']
+      - name: doc_id
+        data_tests:
+          - not_null
+          - unique
+      - name: tekst
+        data_tests:
+          - not_null
+      - name: run_id
+        data_tests:
+          - not_null
