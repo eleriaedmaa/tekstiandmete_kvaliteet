@@ -1,0 +1,44 @@
+version: 2
+
+models:
+  - name: fct_documents
+    description: Üks rida = üks dokument kõigist allikatest. Sisaldab kvaliteedilippe.
+    columns:
+      - name: allikas
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ['riigikogu', 'rahvaalgatus', 'wikipedia']
+      - name: doc_id
+        data_tests:
+          - not_null
+      - name: word_count
+        data_tests:
+          - not_null
+      - name: kasutatav
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [0, 1]
+
+  - name: mart_source_quality
+    description: Päevased mõõdikud allika lõikes - näidikulaua põhitabel.
+    columns:
+      - name: allikas
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ['riigikogu', 'rahvaalgatus', 'wikipedia']
+      - name: laetud_kuupaev
+        data_tests:
+          - not_null
+      - name: dokumente_kokku
+        data_tests:
+          - not_null
+      - name: kasutatavuse_pct
+        description: Kasutatavate dokumentide osakaal 0-100.
+      - name: peamine_kvaliteedipuudus
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ['liiga_lyhike', 'vale_keel', 'duplikaat', 'puudus_puudub']

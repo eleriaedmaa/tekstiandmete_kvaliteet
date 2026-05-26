@@ -1,0 +1,50 @@
+version: 2
+
+sources:
+  - name: staging
+    schema: staging
+    description: Toorandmed, mille Airflow DAG-id laadivad API-st otse andmebaasi.
+    tables:
+      - name: riigikogu_raw
+        description: Riigikogu API dokumendid (stenogrammid, eelnõud, otsused).
+        columns:
+          - name: run_id
+            description: Töövoo käivituse unikaalne ID (UUID).
+          - name: doc_id
+            description: Riigikogu dokumendi unikaalne identifikaator.
+          - name: pealkiri
+            description: Dokumendi pealkiri.
+          - name: tekst
+            description: Dokumendi täistekst.
+          - name: dok_tyyp
+            description: Dokumendi tüüp (stenogramm, eelnou, jne).
+          - name: avaldatud
+            description: Dokumendi avaldamise aeg.
+
+      - name: rahvaalgatus_raw
+        description: Rahvaalgatus.ee algatuste metaandmed (API) ja täistekst (scraper).
+        columns:
+          - name: doc_id
+            description: Algatuse UUID Rahvaalgatuse API-st.
+          - name: pealkiri
+            description: Algatuse pealkiri.
+          - name: tekst
+            description: Scraperilt eraldatud puhastatud täistekst.
+          - name: staatus
+            description: Algatuse staatus (voting, in_parliament, ...).
+          - name: avaldatud
+            description: Algatuse esitamise aeg.
+
+      - name: wikipedia_raw
+        description: Eesti Wikipedia artiklite täistekst.
+        columns:
+          - name: doc_id
+            description: Artikli pageid + revid kombinatsioon.
+          - name: pealkiri
+            description: Artikli pealkiri.
+          - name: tekst
+            description: Artikli sisu (extract API tagastusest).
+          - name: revid
+            description: MediaWiki revisiooni ID.
+          - name: avaldatud
+            description: Viimase muudatuse ajatempel.

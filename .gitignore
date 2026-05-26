@@ -1,0 +1,10 @@
+.env
+__pycache__/
+*.pyc
+*.log
+target/
+dbt_packages/
+logs/
+.user.yml
+.streamlit/secrets.toml
+init/02_historical_data.sql

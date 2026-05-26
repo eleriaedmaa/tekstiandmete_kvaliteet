@@ -1,0 +1,4 @@
+allikas,nimi,baas_url,kogumissagedus,on_aktiivne
+riigikogu,Riigikogu API,https://api.riigikogu.ee/,@daily,true
+rahvaalgatus,Rahvaalgatus.ee API + scraper,https://rahvaalgatus.ee/api,@daily,true
+wikipedia,Eesti Wikipedia API,https://et.wikipedia.org/w/api.php,@daily,true

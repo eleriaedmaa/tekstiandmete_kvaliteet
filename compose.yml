@@ -1,0 +1,182 @@
+# Tekstiandmete kvaliteedi pipeline — Airflow + dbt + Streamlit
+#
+# Teenused:
+#   analytics-db        — peamine PostgreSQL andmebaas (port 55432)
+#   airflow-db          — Airflow metaandmebaas
+#   airflow-init        — ühekordne initsialiseerimine
+#   airflow-apiserver   — Airflow UI ja REST API (port 8080)
+#   airflow-scheduler   — DAG-ide käivitamine
+#   airflow-dag-processor — DAG-ide parsimine
+#   dashboard           — Streamlit näidikulaud (port 8501)
+
+x-airflow-common:
+  &airflow-common
+  image: apache/airflow:3.1.8
+  env_file:
+    - .env
+  environment:
+    &airflow-common-env
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__CORE__AUTH_MANAGER: airflow.providers.fab.auth_manager.fab_auth_manager.FabAuthManager
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${AIRFLOW_USER:-airflow}:${AIRFLOW_PASSWORD:-airflow}@airflow-db:5432/${AIRFLOW_DB:-airflow}
+    AIRFLOW__CORE__FERNET_KEY: ''
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
+    AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+    AIRFLOW__CORE__EXECUTION_API_SERVER_URL: 'http://airflow-apiserver:8080/execution/'
+    AIRFLOW__API_AUTH__JWT_SECRET: ${AIRFLOW__API_AUTH__JWT_SECRET:-airflow_jwt_secret}
+    AIRFLOW__API_AUTH__JWT_ISSUER: ${AIRFLOW__API_AUTH__JWT_ISSUER:-airflow}
+    AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK: 'true'
+    AIRFLOW_CONN_ANALYTICS_DB: postgresql://${POSTGRES_USER:-praktikum}:${POSTGRES_PASSWORD:-praktikum}@analytics-db:5432/${POSTGRES_DB:-praktikum}
+    POSTGRES_HOST: analytics-db
+    POSTGRES_PORT: "5432"
+    POSTGRES_USER: ${POSTGRES_USER:-praktikum}
+    POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-praktikum}
+    POSTGRES_DB: ${POSTGRES_DB:-praktikum}
+    _PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS:-dbt-postgres==1.10.0 beautifulsoup4==4.12.3 lxml==5.3.0}
+  volumes:
+    - ./airflow/dags:/opt/airflow/dags
+    - airflow-logs:/opt/airflow/logs
+    - ./dbt_project:/opt/airflow/dbt_project
+  user: "${AIRFLOW_UID:-50000}:0"
+  depends_on:
+    &airflow-common-depends-on
+    airflow-db:
+      condition: service_healthy
+    analytics-db:
+      condition: service_healthy
+
+services:
+
+  analytics-db:
+    image: postgres:16
+    container_name: tekstiandmete-kvaliteet-analytics-db
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-praktikum}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-praktikum}
+      POSTGRES_DB: ${POSTGRES_DB:-praktikum}
+    ports:
+      - "${DB_PORT_HOST:-55432}:5432"
+    volumes:
+      - ./init:/docker-entrypoint-initdb.d
+      - analytics-db-volume:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-praktikum}"]
+      interval: 10s
+      retries: 5
+      start_period: 5s
+    restart: always
+
+  airflow-db:
+    image: postgres:16
+    container_name: tekstiandmete-kvaliteet-airflow-db
+    environment:
+      POSTGRES_USER: ${AIRFLOW_USER:-airflow}
+      POSTGRES_PASSWORD: ${AIRFLOW_PASSWORD:-airflow}
+      POSTGRES_DB: ${AIRFLOW_DB:-airflow}
+    volumes:
+      - airflow-db-volume:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${AIRFLOW_USER:-airflow}"]
+      interval: 10s
+      retries: 5
+      start_period: 5s
+    restart: always
+
+  airflow-init:
+    <<: *airflow-common
+    container_name: tekstiandmete-kvaliteet-airflow-init
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        mkdir -p /opt/airflow/{logs,dags}
+        /entrypoint airflow version
+        /entrypoint airflow config list >/dev/null
+        chown -R "${AIRFLOW_UID:-50000}:0" /opt/airflow/
+    environment:
+      <<: *airflow-common-env
+      _AIRFLOW_DB_MIGRATE: 'true'
+      _AIRFLOW_WWW_USER_CREATE: 'true'
+      _AIRFLOW_WWW_USER_USERNAME: ${AIRFLOW_USER:-airflow}
+      _AIRFLOW_WWW_USER_PASSWORD: ${AIRFLOW_PASSWORD:-airflow}
+      _PIP_ADDITIONAL_REQUIREMENTS: ''
+    user: "0:0"
+    restart: "no"
+
+  airflow-apiserver:
+    <<: *airflow-common
+    container_name: tekstiandmete-kvaliteet-airflow-apiserver
+    command: api-server
+    ports:
+      - "${AIRFLOW_PORT_HOST:-8080}:8080"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/api/v2/monitor/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: always
+    depends_on:
+      <<: *airflow-common-depends-on
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-scheduler:
+    <<: *airflow-common
+    container_name: tekstiandmete-kvaliteet-airflow-scheduler
+    command: scheduler
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8974/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: always
+    depends_on:
+      <<: *airflow-common-depends-on
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-dag-processor:
+    <<: *airflow-common
+    container_name: tekstiandmete-kvaliteet-airflow-dagproc
+    command: dag-processor
+    healthcheck:
+      test: ["CMD-SHELL", "airflow jobs check --job-type DagProcessorJob --hostname \"$${HOSTNAME}\""]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: always
+    depends_on:
+      <<: *airflow-common-depends-on
+      airflow-init:
+        condition: service_completed_successfully
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile.dashboard
+    container_name: tekstiandmete-kvaliteet-dashboard
+    env_file:
+      - .env
+    environment:
+      DB_HOST: analytics-db
+      DB_PORT: "5432"
+      DB_USER: ${POSTGRES_USER:-praktikum}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-praktikum}
+      DB_NAME: ${POSTGRES_DB:-praktikum}
+      DASHBOARD_AUTOREFRESH_SECONDS: ${DASHBOARD_AUTOREFRESH_SECONDS:-60}
+    ports:
+      - "${DASHBOARD_PORT_HOST:-8501}:8501"
+    depends_on:
+      analytics-db:
+        condition: service_healthy
+    restart: always
+
+volumes:
+  analytics-db-volume:
+  airflow-db-volume:
+  airflow-logs:
