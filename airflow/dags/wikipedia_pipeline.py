@@ -7,6 +7,7 @@ seejärel prop=extracts, et tõmmata iga artikli puhastatud tekst.
 API dokumentatsioon: https://et.wikipedia.org/w/api.php
 """
 
+import time
 import uuid
 from datetime import datetime, timedelta, timezone
 
@@ -18,6 +19,7 @@ from airflow.providers.postgres.hooks.postgres import PostgresHook
 API_URL = "https://et.wikipedia.org/w/api.php"
 USER_AGENT = "tekstiandmete-kvaliteet-praktikum/1.0 (ELTL; kontakt: praktikum@eki.ee)"
 HTTP_TIMEOUT = 30
+SCRAPE_DELAY_SEC = 1.0                     # viisakuspaus iga päringu järel (väldib 429 vigu)
 SOURCE_NAME = "wikipedia"
 
 def _registreeri_kaivitus(hook: PostgresHook, run_id: str) -> None:
@@ -115,6 +117,7 @@ def lae_wikipedia(**context):
             kasitletud_pageid.add(pageid)
 
             pealkiri, tekst = _tomba_artikli_tekst(session, pageid)
+            time.sleep(SCRAPE_DELAY_SEC)
             doc_id = f"{pageid}_{revid}" if revid else str(pageid)
             url = f"https://et.wikipedia.org/?curid={pageid}"
 
