@@ -2,27 +2,18 @@
 
 ## Mis on valmis
 
-- [x] Docker Compose käivitab kõik teenused
-- [x] Andmeid saadakse Riigikogu API-st kätte
-- [x] Andmed laetakse `raw` kihti
-- [x] Kõik transformatsioonid toimivad (stg_*, int_documents, fct_documents, mart_source_quality)
-- [x] Streamlit näidikulaud on nähtaval kolme mõõdikuga
-- [x] Vähemalt üks andmekvaliteedi test läbib (not_null, unique)
-- [x] Rahvaalgatus.ee API sissevõtt valmis (kõik ~1100 algatust)
-- [x] Vikipeedia API sissevõtt valmis (paginatsioon, igapäevane uuendus)
-- [x] Ajalooliste andmete ühekordne migratsioon tehtud (seeds → staging)
-- [ ] Kõik andmekvaliteedi testid rohelised (Evelin)
-
-Kõik kolm andmevoogu töötavad otsast lõpuni: API → staging → intermediate → marts →
-Streamlit. Airflow käivitab kõiki DAG-e igapäevaselt (`@daily`). Ajaloolised andmed
-(~139 000 URL-i) on migreeritud staging tabelitesse ja salvestatud
-`init/02_historical_data.sql.gz` failina uue keskkonna püstitamiseks.
+- [x] Kõik kolm Airflow DAG-i käivituvad igapäevaselt ja toovad uusi andmeid
+- [ ] Andmed laetakse staging kihti (`riigikogu_raw`, `rahvaalgatus_raw`, `wikipedia_raw`)
+- [ ] dbt transformatsioonid toimivad otsast lõpuni (`stg_*` → `int_documents` → `fct_documents`, `mart_source_quality`)
+- [ ] Andmekvaliteedi testid on rohelised
+- [ ] Streamlit näidikulaud näitab kõiki kolme mõõdikut
+- [ ] Uus keskkond on võimalik püsti panna README juhendi järgi (sh ajaloolised andmed)
 
 ## Järgmised sammud
 
-- Evelin: ülejäänud dbt kvaliteeditestid lisada ja roheliseks saada
-- Liis: näidikulaua viimistlemine ja seeds/allikad.csv kontrollimine
-- Kokkuvõte, puudused ja edasiarendused README-sse kirja panna (kõik)
+- Ülejäänud dbt kvaliteeditestid lisada ja roheliseks saada
+- Näidikulaua viimistlemine
+- Kokkuvõte, puudused ja edasiarendused README-sse kirja panna
 
 ## Mis takistab
 
@@ -30,6 +21,28 @@ Streamlit. Airflow käivitab kõiki DAG-e igapäevaselt (`@daily`). Ajaloolised 
   ja parandatud — `limit=2000` toob kõik ~1100 algatust ühes päringus)
 - Vikipeedia API piirab päringute sagedust (429 vead) — migratsiooniskript kasutab
   2-sekundilist pausi; igapäevane DAG töötab normaalselt
+
+## Võimalikud edasiarendused
+
+### Uued andmeallikad
+- **Riigikogu eelnõud** — täistekst on `.docx` failides (`/api/volumes/drafts` → `/api/files/{uuid}/download`); vajab `python-docx` teeki
+- **Riigikogu komisjonide protokollid** — saadaval PDF ja ASICE failidena (`/api/events?type=COMMITTEE`); vajab PDF-ist teksti ekstraktimist (`pdfplumber` vms)
+- **Riigi Teataja** — õigusaktide täistekstid, avalik API olemas
+- **ERR uudised** — RSS-voog, lihtne scraper
+
+### Andmekvaliteedi täiustused
+- **Täpsem keeletuvastus** — praegune `is_estonian` kontrollib lihtsalt eesti tähtede ja sõnade olemasolu; võiks kasutada `langdetect` või `lingua` teeki
+- **Duplikaatide tuvastus allikate vahel** — praegu tuvastatakse ainult staging-sisesed duplikaadid (sama hash); ristallika duplikaadid jäävad märkamata
+- **Teksti normaliseerimise samm** — HTML-jäägid, liigne whitespace, päised/jalused eemaldada enne kvaliteedikontrolli
+
+### Näidikulaud
+- **Dok_tyyp järgi filtreerimine** — näidata stenogramme ja eelnõusid eraldi (kui eelnõud lisatakse)
+- **Ajavahemiku valik** — praegu näidatakse kogu ajalugu; lisada kuupäevafiltrid
+- **Allalaadimislink** — võimaldada kasutajal eksportida filtreeritud andmed CSV-na
+
+### Tehniline võlg
+- Airflow DAG-id kasutavad `retries=1`; tootmiskeskkonnas soovitav `retries=3`
+- `migrate_seed_to_staging.py` skript on ühekordne tööriist — võiks eemaldada pärast projekti lõppu
 
 ## Kontrollpunkt
 
