@@ -94,6 +94,14 @@ try:
         FROM marts.fct_documents
         """
     )
+    katvus = load_df(
+        """
+        SELECT allikas, avaldatud_kuupaev, dokumente_kokku, sonu_kokku, sonu_kasutatav
+        FROM marts.mart_avaldamise_katvus
+        WHERE avaldatud_kuupaev >= '2016-01-01'
+        ORDER BY avaldatud_kuupaev, allikas
+        """
+    )
     runs = load_df(
         """
         SELECT run_id::text AS run_id, source_name, fetched_at, status, docs_added, message
@@ -150,6 +158,42 @@ k4.metric(
     "Keskmine kasutatavus",
     f"{kasutatavus_kaalutud:.1f}%",
 )
+
+# --- Korpuse ajaline katvus ---
+st.subheader("Uute andmete ajajoon — avaldamiskuupäeva järgi")
+
+if not katvus.empty:
+    katvus["avaldatud_kuupaev"] = pd.to_datetime(katvus["avaldatud_kuupaev"]).dt.normalize()
+    katvus["allikas_nimi"] = katvus["allikas"].map(ALLIKA_NIMED).fillna(katvus["allikas"])
+    katvus["kuu"] = katvus["avaldatud_kuupaev"].dt.to_period("M").astype(str)
+    katvus_kuu = (
+        katvus.groupby(["allikas_nimi", "kuu"], as_index=False)
+        .agg(sonu_kasutatav=("sonu_kasutatav", "sum"), dokumente_kokku=("dokumente_kokku", "sum"))
+    )
+    katvus_diagramm = (
+        alt.Chart(katvus_kuu)
+        .mark_bar()
+        .encode(
+            x=alt.X("kuu:O", title="Kuu", axis=alt.Axis(labelAngle=-45)),
+            y=alt.Y("dokumente_kokku:Q", title="Dokumente", stack="zero"),
+            color=alt.Color(
+                "allikas_nimi:N",
+                title="Allikas",
+                scale=alt.Scale(
+                    domain=list(ALLIKA_NIMED.values()),
+                    range=[ALLIKA_VARVID[k] for k in ALLIKA_NIMED.keys()],
+                ),
+            ),
+            tooltip=[
+                alt.Tooltip("kuu:O", title="Kuu"),
+                alt.Tooltip("allikas_nimi:N", title="Allikas"),
+                alt.Tooltip("dokumente_kokku:Q", title="Dokumente"),
+                alt.Tooltip("sonu_kasutatav:Q", title="Kasutatavaid sõnu"),
+            ],
+        )
+        .properties(height=300)
+    )
+    st.altair_chart(katvus_diagramm, use_container_width=True)
 
 # --- Mõõdik 1: sõnade lisandumine ajas ---
 st.subheader("Mõõdik 1 — uute sõnade lisandumine ajas")

@@ -20,7 +20,7 @@ API_URL = "https://api.riigikogu.ee/api/steno/verbatims"
 USER_AGENT = "tekstiandmete-kvaliteet-praktikum/1.0 (ELTL; kontakt: praktikum@eki.ee)"
 HTTP_TIMEOUT = 60
 SOURCE_NAME = "riigikogu"
-LOOKBACK_PAEVI = 7
+LOOKBACK_PAEVI = 364  # ajutine tagasivaade; tagasi 7 peale pärast jooksutust
 
 
 def _registreeri_kaivitus(hook: PostgresHook, run_id: str) -> None:

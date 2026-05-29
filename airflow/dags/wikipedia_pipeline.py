@@ -10,6 +10,7 @@ API dokumentatsioon: https://et.wikipedia.org/w/api.php
 import time
 import uuid
 from datetime import datetime, timedelta, timezone
+from urllib.parse import unquote
 
 import requests
 from airflow import DAG
@@ -43,18 +44,20 @@ def _markeri_loppu(hook: PostgresHook, run_id: str, status: str, docs_added: int
     )
 
 
-def _otsi_uued_artiklid(session: requests.Session) -> list[dict]:
-    """Tagastab viimase 24h muudetud artiklite (pageid, revid, title) nimekirja (kõik lehed)."""
-    alates = (datetime.now(timezone.utc) - timedelta(days=1)).isoformat()
+def _otsi_uued_artiklid(session: requests.Session, execution_date: datetime) -> list[dict]:
+    """Tagastab execution_date päeva muudetud artiklite (pageid, revid, title) nimekirja (kõik lehed)."""
+    alates = (execution_date - timedelta(days=1)).isoformat()
+    kuni = execution_date.isoformat()
     tulemused: list[dict] = []
     params: dict = {
         "action": "query",
         "list": "recentchanges",
         "rcstart": alates,
+        "rcend": kuni,
         "rcdir": "newer",
         "rcnamespace": 0,
-        "rctype": "edit|new",
-        "rcprop": "title|ids|timestamp",
+        "rctype": "new",
+        "rcprop": "title|ids|timestamp|type|sizes",
         "rclimit": 500,
         "format": "json",
     }
@@ -69,15 +72,18 @@ def _otsi_uued_artiklid(session: requests.Session) -> list[dict]:
     return tulemused
 
 
-def _tomba_artikli_tekst(session: requests.Session, pageid: int) -> tuple[str | None, str | None]:
-    """Tagastab artikli (pealkiri, tekst) extracts API-st."""
+def _tomba_artikli_tekst(session: requests.Session, pageid: int) -> tuple[str | None, str | None, str | None]:
+    """Tagastab artikli (pealkiri, tekst, loomise_kuupaev) extracts+revisions API-st."""
     resp = session.get(
         API_URL,
         params={
             "action": "query",
             "pageids": pageid,
-            "prop": "extracts",
+            "prop": "extracts|revisions",
             "explaintext": 1,                    # ilma HTML-margukestadeta
+            "rvlimit": 1,                        # ainult esimene revisjon
+            "rvdir": "newer",                    # vanaimast uuemani → esimene = loomiskuupäev
+            "rvprop": "timestamp",
             "format": "json",
         },
         timeout=HTTP_TIMEOUT,
@@ -85,7 +91,9 @@ def _tomba_artikli_tekst(session: requests.Session, pageid: int) -> tuple[str | 
     resp.raise_for_status()
     pages = resp.json().get("query", {}).get("pages", {})
     page = pages.get(str(pageid), {})
-    return page.get("title"), page.get("extract")
+    revisions = page.get("revisions") or []
+    loomise_kuupaev = revisions[0].get("timestamp") if revisions else None
+    return page.get("title"), page.get("extract"), loomise_kuupaev
 
 
 def lae_wikipedia(**context):
@@ -98,14 +106,24 @@ def lae_wikipedia(**context):
         session = requests.Session()
         session.headers.update({"User-Agent": USER_AGENT})
 
-        muudatused = _otsi_uued_artiklid(session)
+        muudatused = _otsi_uued_artiklid(session, context["data_interval_end"])
         now = datetime.now(timezone.utc)
         sql = """
             INSERT INTO staging.wikipedia_raw
-                (run_id, doc_id, pealkiri, tekst, revid, avaldatud, allikas_url, laetud_kell)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                (run_id, doc_id, pealkiri, tekst, revid, avaldatud, loomise_kuupaev, allikas_url, laetud_kell)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT DO NOTHING
         """
+
+        # Lae seedis olevad pealkirjad — neid artikleid ei lisata
+        # URL-ist eraldame pealkirja ja dekodeerime %XX kodeeringu (nt %C3%A4 → ä)
+        seed_pealkirjad: set[str] = set(
+            unquote(row[0].split("/wiki/")[-1]).replace("_", " ")
+            for row in hook.get_records(
+                "SELECT \"URL\" FROM marts.teadaolevad_dokumendid WHERE allikas = 'wiki'"
+            )
+            if "/wiki/" in row[0]
+        )
 
         # Dedupliseeri pageid kaupa (recentchanges võib sama artikli mitu korda tagastada)
         kasitletud_pageid: set[int] = set()
@@ -116,8 +134,10 @@ def lae_wikipedia(**context):
                 continue
             kasitletud_pageid.add(pageid)
 
-            pealkiri, tekst = _tomba_artikli_tekst(session, pageid)
+            pealkiri, tekst, loomise_kuupaev = _tomba_artikli_tekst(session, pageid)
             time.sleep(SCRAPE_DELAY_SEC)
+            if pealkiri and pealkiri in seed_pealkirjad:
+                continue
             doc_id = f"{pageid}_{revid}" if revid else str(pageid)
             url = f"https://et.wikipedia.org/?curid={pageid}"
 
@@ -128,6 +148,7 @@ def lae_wikipedia(**context):
                 tekst,
                 revid,
                 m.get("timestamp"),
+                loomise_kuupaev,
                 url,
                 now,
             ))
@@ -144,8 +165,8 @@ with DAG(
     dag_id="wikipedia_pipeline",
     description="Laeb Wikipedia uued/muudetud artiklid staging.wikipedia_raw tabelisse",
     schedule="@daily",
-    start_date=datetime(2026, 1, 1),
-    catchup=False,
+    start_date=datetime(2026, 5, 20),
+    catchup=True,
     default_args={"retries": 2, "retry_delay": timedelta(minutes=10)},
     tags=["wikipedia", "tekstiandmete-kvaliteet", "ingest"],
 ) as dag:
