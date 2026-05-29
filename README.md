@@ -120,8 +120,7 @@ docker compose exec analytics-db bash -c "gunzip -c /tmp/02_historical_data.sql.
 docker compose exec airflow-apiserver bash -c "cd /opt/airflow/dbt_project && dbt seed --profiles-dir . && dbt run --profiles-dir ."
 
 # 7. Ava Airflow UI ja käivita DAG-id käsitsi
-#    http://localhost:8080
-#    Kasutajanimi: airflow  |  Parool: airflow
+#    http://localhost:8080  (kasutaja: airflow / parool: airflow)
 #    Soovituslik järjekord: riigikogu_pipeline → rahvaalgatus_pipeline → wikipedia_pipeline → dbt_pipeline
 
 # 8. Ava näidikulaud

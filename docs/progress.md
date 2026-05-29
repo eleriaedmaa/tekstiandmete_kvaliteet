@@ -2,53 +2,35 @@
 
 ## Mis on valmis
 
-- [x] Kõik kolm Airflow DAG-i käivituvad igapäevaselt ja toovad uusi andmeid
-- [ ] Andmed laetakse staging kihti (`riigikogu_raw`, `rahvaalgatus_raw`, `wikipedia_raw`)
-- [ ] dbt transformatsioonid toimivad otsast lõpuni (`stg_*` → `int_documents` → `fct_documents`, `mart_source_quality`)
-- [ ] Andmekvaliteedi testid on rohelised
-- [ ] Streamlit näidikulaud näitab kõiki kolme mõõdikut
-- [ ] Uus keskkond on võimalik püsti panna README juhendi järgi (sh ajaloolised andmed)
+- [x] Kõik kolm andmete sissevõtu Airflow DAG-i käivituvad regulaarselt, kolmest allikast tuuakse iga päev uusi andmeid.
+- [x] Andmed laetakse staging kihti (`riigikogu_raw`, `rahvaalgatus_raw`, `wikipedia_raw`)
+- [x] dbt transformatsioonid toimivad otsast lõpuni (`stg_*` → `int_documents` → `fct_documents`, `mart_source_quality`, `mart_avaldamise_katvus`)
+- [x] Andmekvaliteedi testid on rohelised
+- [x] Streamlit näidikulaud näitab kõigi kolme mõõdiku MVPd
+- [x] Uus keskkond on võimalik püsti panna README juhendi järgi (sh ajaloolised andmed)
+- [x] Wikipedia DAG tõmbab ainult uusi artikleid (muudetud failid välja filtreeritud)
 
 ## Järgmised sammud
 
-- Ülejäänud dbt kvaliteeditestid lisada ja roheliseks saada
+- Oodata Wikipedia backfilli lõppu, seejärel käivitada `dbt run` ja kontrollida ajaloolist katvust joonisel
 - Näidikulaua viimistlemine
 - Kokkuvõte, puudused ja edasiarendused README-sse kirja panna
 
 ## Mis takistab
 
-- Rahvaalgatus.ee API tagastab algatused ilma offseti toeta (ignoreerimine leitud
-  ja parandatud — `limit=2000` toob kõik ~1100 algatust ühes päringus)
-- Vikipeedia API piirab päringute sagedust (429 vead) — migratsiooniskript kasutab
-  2-sekundilist pausi; igapäevane DAG töötab normaalselt
-
-## Võimalikud edasiarendused
-
-### Uued andmeallikad
-- **Riigikogu eelnõud** — täistekst on `.docx` failides (`/api/volumes/drafts` → `/api/files/{uuid}/download`); vajab `python-docx` teeki
-- **Riigikogu komisjonide protokollid** — saadaval PDF ja ASICE failidena (`/api/events?type=COMMITTEE`); vajab PDF-ist teksti ekstraktimist (`pdfplumber` vms)
-- **Riigi Teataja** — õigusaktide täistekstid, avalik API olemas
-- **ERR uudised** — RSS-voog, lihtne scraper
-
-### Andmekvaliteedi täiustused
-- **Täpsem keeletuvastus** — praegune `is_estonian` kontrollib lihtsalt eesti tähtede ja sõnade olemasolu; võiks kasutada `langdetect` või `lingua` teeki
-- **Duplikaatide tuvastus allikate vahel** — praegu tuvastatakse ainult staging-sisesed duplikaadid (sama hash); ristallika duplikaadid jäävad märkamata
-- **Teksti normaliseerimise samm** — HTML-jäägid, liigne whitespace, päised/jalused eemaldada enne kvaliteedikontrolli
-
-### Näidikulaud
-- **Dok_tyyp järgi filtreerimine** — näidata stenogramme ja eelnõusid eraldi (kui eelnõud lisatakse)
-- **Ajavahemiku valik** — praegu näidatakse kogu ajalugu; lisada kuupäevafiltrid
-- **Allalaadimislink** — võimaldada kasutajal eksportida filtreeritud andmed CSV-na
+- Wikipedia ajalooliste andmete backfill (2016–2026) jookseb veel taustal — kuni see lõpeb, ei kajastu joonisel täielik ajalooline katvus.
 
 ### Tehniline võlg
-- Airflow DAG-id kasutavad `retries=1`; tootmiskeskkonnas soovitav `retries=3`
-- `migrate_seed_to_staging.py` skript on ühekordne tööriist — võiks eemaldada pärast projekti lõppu
+- Airflow DAG-id kasutavad `retries=2`; tootmiskeskkonnas soovitav `retries=3`
+- `migrate_seed_to_staging.py` skript on ühekordne tööriist — võiks eemaldada
 
 ## Kontrollpunkt
 
-Viimased töövoo käivitused ja nende tulemus:
-
 ```bash
+# Kontrolli, et kõik teenused töötavad
+docker compose ps
+
+# Viimased töövoo käivitused
 docker compose exec analytics-db psql -U EKI -d eki_postgres -c "
 SELECT source_name, DATE(fetched_at) as kuupaev, docs_added, status
 FROM staging.pipeline_runs
