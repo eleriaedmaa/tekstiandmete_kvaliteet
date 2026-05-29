@@ -2,7 +2,7 @@
 
 ## Äriküsimus
 
-Kui palju kvaliteetset eestikeelset teksti on võimalik regulaarselt koguda valitud avalikest andmeallikatest?
+Kui palju unikaalset, piisavalt pikkade tervikdokumentidena kättesaadavat eestikeelset teksti on võimalik regulaarselt koguda valitud avalikest andmeallikatest?
 
 ## Mõõdikud
 
