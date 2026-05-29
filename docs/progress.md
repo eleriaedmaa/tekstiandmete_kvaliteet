@@ -2,7 +2,7 @@
 
 ## Mis on valmis
 
-- [ ] Kõik kolm Airflow DAG-i käivituvad igapäevaselt ja toovad uusi andmeid
+- [x] Kõik kolm Airflow DAG-i käivituvad igapäevaselt ja toovad uusi andmeid
 - [ ] Andmed laetakse staging kihti (`riigikogu_raw`, `rahvaalgatus_raw`, `wikipedia_raw`)
 - [ ] dbt transformatsioonid toimivad otsast lõpuni (`stg_*` → `int_documents` → `fct_documents`, `mart_source_quality`)
 - [ ] Andmekvaliteedi testid on rohelised
