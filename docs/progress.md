@@ -27,16 +27,14 @@
 ## Kontrollpunkt
 
 ```bash
-# Kontrolli, et kõik teenused töötavad
-docker compose ps
-
-# Viimased töövoo käivitused
 docker compose exec analytics-db psql -U EKI -d eki_postgres -c "
-SELECT source_name, DATE(fetched_at) as kuupaev, docs_added, status
+SELECT source_name, DATE(fetched_at) AS kuupaev, docs_added, status
 FROM staging.pipeline_runs
 WHERE status = 'success'
 ORDER BY fetched_at DESC
 LIMIT 10;"
 ```
+
+Oodatav tulemus: kolme allika (`riigikogu`, `rahvaalgatus`, `wikipedia`) kirjed staatusega `success` ja `docs_added > 0`.
 
 Näidikulaud: http://localhost:8501
