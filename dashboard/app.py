@@ -198,31 +198,35 @@ if not katvus.empty:
 # --- Mõõdik 1: sõnade lisandumine ajas ---
 st.subheader("Mõõdik 1 — uute sõnade lisandumine ajas")
 
-sonad_ajas = (
-    alt.Chart(quality)
-    .mark_bar()
-    .encode(
-        x=alt.X("laetud_kuupaev_str:O", title="Kuupäev", sort=quality["laetud_kuupaev_str"].tolist(), axis=alt.Axis(labelAngle=-45)),
-        y=alt.Y("sonu_kasutatav:Q", title="Kasutatavad sõnad", stack="zero"),
-        color=alt.Color(
-            "allikas_nimi:N",
-            title="Allikas",
-            scale=alt.Scale(
-                domain=list(ALLIKA_NIMED.values()),
-                range=[ALLIKA_VARVID[k] for k in ALLIKA_NIMED.keys()],
+if not katvus.empty:
+    moodik1 = katvus[katvus["avaldatud_kuupaev"] >= pd.Timestamp("2026-05-22")].copy()
+    moodik1["avaldatud_kuupaev_str"] = moodik1["avaldatud_kuupaev"].dt.strftime("%d.%m.%Y")
+    sonad_ajas = (
+        alt.Chart(moodik1)
+        .mark_bar()
+        .encode(
+            x=alt.X("avaldatud_kuupaev_str:O", title="Kuupäev",
+                    sort=moodik1["avaldatud_kuupaev_str"].tolist(),
+                    axis=alt.Axis(labelAngle=-45)),
+            y=alt.Y("sonu_kasutatav:Q", title="Kasutatavad sõnad", stack="zero"),
+            color=alt.Color(
+                "allikas_nimi:N",
+                title="Allikas",
+                scale=alt.Scale(
+                    domain=list(ALLIKA_NIMED.values()),
+                    range=[ALLIKA_VARVID[k] for k in ALLIKA_NIMED.keys()],
+                ),
             ),
-        ),
-        tooltip=[
-            alt.Tooltip("laetud_kuupaev_str:O", title="Kuupäev"),
-            alt.Tooltip("allikas_nimi:N", title="Allikas"),
-            alt.Tooltip("dokumente_kokku:Q", title="Dokumente"),
-            alt.Tooltip("sonu_kokku:Q", title="Sõnu kokku"),
-            alt.Tooltip("sonu_kasutatav:Q", title="Kasutatavaid sõnu"),
-        ],
+            tooltip=[
+                alt.Tooltip("avaldatud_kuupaev_str:O", title="Kuupäev"),
+                alt.Tooltip("allikas_nimi:N", title="Allikas"),
+                alt.Tooltip("dokumente_kokku:Q", title="Dokumente"),
+                alt.Tooltip("sonu_kasutatav:Q", title="Kasutatavaid sõnu"),
+            ],
+        )
+        .properties(height=300)
     )
-    .properties(height=300)
-)
-st.altair_chart(sonad_ajas, use_container_width=True)
+    st.altair_chart(sonad_ajas, use_container_width=True)
 
 # --- Mõõdik 2: kasutatavuse % ---
 st.subheader("Mõõdik 2 — kasutatavuse % allika kohta")
