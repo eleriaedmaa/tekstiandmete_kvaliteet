@@ -2,49 +2,41 @@
 
 ## Mis on valmis
 
-- [ ] Docker Compose käivitab kõik teenused
-- [ ] Andmeid saadakse Riigikogu API-st kätte
-- [ ] Andmed laetakse `raw` kihti
-- [ ] Vähemalt üks transformatsioon toimib (stg_riigikogu)
-- [ ] Vähemalt üks näidikulaud on nähtaval (Metabase)
-- [ ] Vähemalt üks andmekvaliteedi test läbib (not_null, unique)
-- [ ] Rahvaalgatus.ee API sissevõtt valmis
-- [ ] Vikipeedia API sissevõtt valmis
-- [ ] Kõik andmekvaliteedi testid rohelised
-
-Riigikogu andmevoog töötab otsast lõpuni: API → raw → staging →
-Metabase. Evelin on Rahvaalgatus.ee API sissevõtuga töös, Liis
-Vikipeedia omaga. seeds/allikad.csv on valmis.
+- [x] Kõik kolm andmete sissevõtu Airflow DAG-i käivituvad regulaarselt, kolmest allikast tuuakse iga päev uusi andmeid.
+- [x] Andmed laetakse staging kihti (`riigikogu_raw`, `rahvaalgatus_raw`, `wikipedia_raw`)
+- [x] dbt transformatsioonid toimivad otsast lõpuni (`stg_*` → `int_documents` → `fct_documents`, `mart_source_quality`, `mart_avaldamise_katvus`)
+- [x] Andmekvaliteedi testid on rohelised
+- [x] Streamlit näidikulaud näitab kõigi kolme mõõdiku MVPd
+- [x] Uus keskkond on võimalik püsti panna README juhendi järgi (sh ajaloolised andmed)
+- [x] Wikipedia DAG tõmbab ainult uusi artikleid (muudetud failid välja filtreeritud)
 
 ## Järgmised sammud
 
-- Rahvaalgatus.ee ja Vikipeedia sissevõtt lõpetada ja staging
-  mudelid lisada
-- mart_allikate_maht ja mart_kvaliteet mudelid valmis teha
-  (agregeeritud andmed dashboardi jaoks)
-- Ülejäänud andmekvaliteedi testid lisada (keeletuvastus, värskus)
-- Metabase dashboard täiendada kõigi 3 mõõdikuga
-- Evelin teeb oma README ja testide osad valmis enne 1. juunit
-  (puhkus 1.–7. juunil)
+- Oodata Wikipedia backfilli lõppu, seejärel käivitada `dbt run` ja kontrollida ajaloolist katvust joonisel
+- Näidikulaua viimistlemine
+- Kokkuvõte, puudused ja edasiarendused README-sse kirja panna
 
 ## Mis takistab
 
-- Riigikogu API tagastab istungipäevadel rohkem andmeid kui muudel
-  päevadel — värskuse test (< 48h) vajab kohandamist, et mitte
-  valepositiivseid anda nädalavahetustel
-- Vikipeedia API `continue`-parameeter vajab veel testimist,
-  et leheküljed õigesti järjest kätte saada
+- Wikipedia ajalooliste andmete backfill (2016–2026) jookseb veel taustal — kuni see lõpeb, ei kajastu joonisel täielik ajalooline katvus.
+
+### Tehniline võlg
+- Airflow DAG-id kasutavad `retries=2`; tootmiskeskkonnas soovitav `retries=3`
+- `migrate_seed_to_staging.py` skript on ühekordne tööriist — võiks eemaldada
 
 ## Kontrollpunkt
 
-Käsk, millega saab kontrollida, et töövoog töötab:
-
 ```bash
-docker compose exec pipeline python scripts/run_pipeline.py check
+# Kontrolli, et kõik teenused töötavad
+docker compose ps
+
+# Viimased töövoo käivitused
+docker compose exec analytics-db psql -U EKI -d eki_postgres -c "
+SELECT source_name, DATE(fetched_at) as kuupaev, docs_added, status
+FROM staging.pipeline_runs
+WHERE status = 'success'
+ORDER BY fetched_at DESC
+LIMIT 10;"
 ```
 
-Oodatav tulemus: kõik kolm allikat väljastab viimase eduka
-sissevõtu kellaaja ja kirjete arvu, nt:
-  riigikogu      last_run=2026-05-30 06:00  rows=142
-  rahvaalgatus   last_run=2026-05-30 06:00  rows=38
-  wikipedia      last_run=2026-05-30 06:00  rows=215
+Näidikulaud: http://localhost:8501
