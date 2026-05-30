@@ -1,4 +1,4 @@
-# EKI tekstiandmete grupp - Tekstiandmete kvaliteet
+# Tekstiandmete kvaliteet — Riigikogu + Rahvaalgatus + Vikipeedia → Airflow + dbt + Streamlit
 
 Projekt ehitab otsast lõpuni andmetöövoo eestikeelse teksti regulaarseks kogumiseks avatud andmeallikatest. Projekt võtab Riigikogu API, Vikipeedia API ning Rahvaalagatus.ee API + scraper kaudu allikate eestikeelsed täistekstid ning metaandmed, salvestab need PostgreSQL andmebaasi ja näitab tulemusi Streamlit näidikulaual. Näidikulaud toob välja, kui palju uusi sõnu lisandub ajas iga allika kohta, milline on nende allikate kasutatavusprotsent ning millised on peamised kvaliteedipuudused. Andmed uuenevad vaikimisi iga päev kell 00:00.
 
@@ -9,7 +9,7 @@ Kui palju unikaalset, piisavalt pikkade tervikdokumentidena kättesaadavat eesti
 **Mõõdikud:**
 1. Uute sõnade lisandumine ajas allika kohta
 2. Kasutatavuse % allika kohta (kui suur osa läbib kvaliteedikontrolli)
-3. Peamised kvaliteedipuudused allika kohta
+3. Peamised kvaliteedipuudused allika kohta (duplikaat / liiga lühike / vale keel)
 
 ## Andmestik
 
@@ -43,7 +43,7 @@ Kui palju unikaalset, piisavalt pikkade tervikdokumentidena kättesaadavat eesti
 ## Andmevoog
 
 <!-- Vajab parandamist -->
-
+```
 Riigikogu API, Vikipeedia API, Rahvaalgatus.ee APi + scraper
     ↓ (Airflow PythonOperator, @daily)
 riigikogu_raw
@@ -56,6 +56,7 @@ fct_documents       ← ühendab allikad
 mart_source_quality  ← arvutab mõõdikud
     ↓
 Streamlit dashboard
+```
 
 ## Projekti struktuur
 
@@ -165,24 +166,28 @@ dbt docs generate --profiles-dir .  # genereerib dokumentatsiooni
 
 Kui DAG on vähemalt korra edukalt läbi jooksnud:
 
-1. Loo andmebaasi ühendus
+### 1. Loo andmebaasi ühendus
 <!-- Vajab Streamlit põhist kirjeldust -->
-2. Registreeri andmestikud (datasetid)
+### 2. Registreeri andmestikud (datasetid)
 <!-- Vajab Streamlit põhist kirjeldust -->
-3. Loo diagrammid (charts)
+### 3. Loo diagrammid (charts)
+
 **Diagramm 1** - uute sõnade lisandumine ajas
-* Tüüp: Tulpdiagramm
-* x-telg: Kuupäev
-* Meetrika: Kasutatavad sõnad
+- Tüüp: Tulpdiagramm
+- x-telg: Kuupäev
+- Meetrika: Kasutatavad sõnad
+
 **Diagramm 2** - kasutatavuse % allika kohta
-* Tüüp: Tulpdiagramm
-* x-telg: Kuupäev
-* Meetrika: Kasutatavus %
+- Tüüp: Tulpdiagramm
+- x-telg: Kuupäev
+- Meetrika: Kasutatavus %
+
 **Diagramm 2** - peamised kvaliteedipuudused allika kohta
-* Tüüp: Sektordiagramm
-* Legend: Puudus
-* Meetrika: Duplikaat, Liiga lühike, Vale keel
-4. Loo näidikulaud (dashboard)
+- Tüüp: Sektordiagramm
+- Legend: Puudus
+- Meetrika: Duplikaat, Liiga lühike, Vale keel
+
+### 4. Loo näidikulaud (dashboard)
 <!-- Vajab Streamlit põhist kirjeldust -->
 
 ## Arhitektuur ja täpsemad otsused
@@ -198,13 +203,22 @@ Projekt kasutab ainult avalikke andmeid. Isikuandmeid ei koguta. Rahvaalgatus.ee
 <!-- Vajab ülevaatamist, täiendamist -->
 
 **Mis töötab:**
-* Pipeline töötab end-to-end: Airflow → staging → dbt → Streamlit
-* dbt testid kontrollivad andmekvaliteeti automaatselt iga käivituse lõpus
-* Airflow käivitab töövoo automaatselt iga päev (@dayly)
-* Streamlit loeb mart_* tabelit ning kuvab sõnade lisandumist ajas, kasutatavuse % ja kvaliteedipuudusi
+- Pipeline töötab end-to-end: Airflow → staging → dbt → Streamlit
+- dbt testid kontrollivad andmekvaliteeti automaatselt iga käivituse lõpus
+- Airflow käivitab töövoo automaatselt iga päev (`@dayly`)
+- Streamlit loeb `mart_*` tabelit ning kuvab sõnade lisandumist ajas, kasutatavuse % ja kvaliteedipuudusi
+
 **Puudused:**
+- Täpitähed ning tüüpilised eestikeelsed sõnad (ja|on|ei|see|kuid|või) ei ole ilmselt piisavad eesti keele kontrollimiseks
+- Riigikogu andmeallikas ei uuene igapäevaselt
+- Rahvaalgatus.ee andmeallikas uueneb aeglaselt, st igapäevaselt ei pruugi tulla uusi algatusi/andmeid
+- Rahvaalgatus.ee on võimalik aktiveerida tõlge teise keelde. Kui algatus on tehtud muus kui eesti keeles ning eestikeelne automaattõlge on aktiveeritud, siis seda tõlget scraper ei tuvasta ning andmevoogu ei lisa
+
 **Võimalikud edasiarendused:**
-* Lisada rohkem algallikaid
+- Lisada rohkem algallikaid
+- Kasutada eesti keele kontrollimiseks mitte täpitähti ning tüüpilisi sõnu, vaid Pythoni teeke (nt langdetect)
+- Duplikaatide rangem kontroll: mitte ainult täistekstide duplikaadid, vaid ka duplikaatide tuvastamine lausete ja fraaside tasandil tekstimassiivi sees
+- Kontrollmehhanism, mis tuvastab ning võtab sisse eestikeelse teksti ka siis, kui see on automaattõlgitud (rahvaalgatus.ee probleem). Automaattõlke kvaliteedikontroll (eraldi paralleelne andmetöövoog)
 
 ## Meeskond
 
